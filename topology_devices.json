@@ -1,0 +1,124 @@
+{
+    "devices": [
+        {
+            "id": "of:0000000000000003",
+            "type": "SWITCH",
+            "available": true,
+            "role": "MASTER",
+            "mfr": "Nicira, Inc.",
+            "hw": "Open vSwitch",
+            "sw": "2.13.5",
+            "serial": "None",
+            "driver": "ovs",
+            "chassisId": "3",
+            "lastUpdate": "1650990438337",
+            "humanReadableLastUpdate": "connected 22m27s ago",
+            "annotations": {
+                "channelId": "192.168.1.91:51216",
+                "datapathDescription": "None",
+                "managementAddress": "192.168.1.91",
+                "protocol": "OF_13"
+            }
+        },
+        {
+            "id": "of:0000000000000004",
+            "type": "SWITCH",
+            "available": true,
+            "role": "MASTER",
+            "mfr": "Nicira, Inc.",
+            "hw": "Open vSwitch",
+            "sw": "2.13.5",
+            "serial": "None",
+            "driver": "ovs",
+            "chassisId": "4",
+            "lastUpdate": "1650990437685",
+            "humanReadableLastUpdate": "connected 22m28s ago",
+            "annotations": {
+                "channelId": "192.168.1.91:51210",
+                "datapathDescription": "None",
+                "managementAddress": "192.168.1.91",
+                "protocol": "OF_13"
+            }
+        },
+        {
+            "id": "of:0000000000000001",
+            "type": "SWITCH",
+            "available": true,
+            "role": "MASTER",
+            "mfr": "Nicira, Inc.",
+            "hw": "Open vSwitch",
+            "sw": "2.13.5",
+            "serial": "None",
+            "driver": "ovs",
+            "chassisId": "1",
+            "lastUpdate": "1650990437646",
+            "humanReadableLastUpdate": "connected 22m28s ago",
+            "annotations": {
+                "channelId": "192.168.1.91:51212",
+                "datapathDescription": "None",
+                "managementAddress": "192.168.1.91",
+                "protocol": "OF_13"
+            }
+        },
+        {
+            "id": "of:0000000000000002",
+            "type": "SWITCH",
+            "available": true,
+            "role": "MASTER",
+            "mfr": "Nicira, Inc.",
+            "hw": "Open vSwitch",
+            "sw": "2.13.5",
+            "serial": "None",
+            "driver": "ovs",
+            "chassisId": "2",
+            "lastUpdate": "1650990438746",
+            "humanReadableLastUpdate": "connected 22m27s ago",
+            "annotations": {
+                "channelId": "192.168.1.91:51220",
+                "datapathDescription": "None",
+                "managementAddress": "192.168.1.91",
+                "protocol": "OF_13"
+            }
+        },
+        {
+            "id": "of:0000000000000005",
+            "type": "SWITCH",
+            "available": true,
+            "role": "MASTER",
+            "mfr": "Nicira, Inc.",
+            "hw": "Open vSwitch",
+            "sw": "2.13.5",
+            "serial": "None",
+            "driver": "ovs",
+            "chassisId": "5",
+            "lastUpdate": "1650990438705",
+            "humanReadableLastUpdate": "connected 22m27s ago",
+            "annotations": {
+                "channelId": "192.168.1.91:51218",
+                "datapathDescription": "None",
+                "managementAddress": "192.168.1.91",
+                "protocol": "OF_13"
+            }
+        },
+        {
+            "id": "of:0000000000000006",
+            "type": "SWITCH",
+            "available": true,
+            "role": "MASTER",
+            "mfr": "Nicira, Inc.",
+            "hw": "Open vSwitch",
+            "sw": "2.13.5",
+            "serial": "None",
+            "driver": "ovs",
+            "chassisId": "6",
+            "lastUpdate": "1650990438087",
+            "humanReadableLastUpdate": "connected 22m28s ago",
+            "annotations": {
+                "channelId": "192.168.1.91:51214",
+                "datapathDescription": "None",
+                "managementAddress": "192.168.1.91",
+                "protocol": "OF_13"
+            }
+        }
+    ]
+}
