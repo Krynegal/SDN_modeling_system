@@ -148,18 +148,3 @@ class Graph:
                     dist[node.index][1] = list(dist[min_node][1])
                     dist[node.index][1].append(node)
         return dist
-
-
-# a = Node("sw1")
-# b = Node("sw2")
-# c = Node("sw5")
-# d = Node("sw4")
-# e = Node("sw3")
-# f = Node("sw6")
-#
-# graph = Graph.create_from_nodes([a, b, c, d, e, f])
-# graph.adj_mat = matrix.get_matrix(matrix.links, len(matrix.devices))
-#
-# graph.print_adj_mat()
-#
-# print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(a)])
