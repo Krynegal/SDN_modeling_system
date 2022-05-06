@@ -4,10 +4,7 @@ with open("topology_links.json", "r") as f:
     links = json.loads(f.read())["links"]
 #print(json.dumps(links, indent=4))
 
-devices = []
-for link in links:
-    devices.append(link["src"]["device"])
-devices = list(set(devices))
+
 
 
 def print_matrix(matrix):

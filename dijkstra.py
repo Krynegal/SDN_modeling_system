@@ -1,5 +1,3 @@
-import matrix
-
 class Node:
     def __init__(self, data, indexloc=None):
         self.data = data
