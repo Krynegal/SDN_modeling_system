@@ -1,5 +1,7 @@
 import requests as req
 import json
+
+import deleteIntents
 import dijkstra
 import input_data
 import matrix
@@ -91,7 +93,7 @@ def make_intent(points, links):
 def post_intents(data):
     for intent in data["intents"]:
         res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
-    print(res)
+        print(res)
 
 
 def get_devices_list(links) -> list:
@@ -137,6 +139,7 @@ if __name__ == '__main__':
 
     host_pair = HostPair("h1", "h6")
     points = get_points(path_list)
+    print(points.list)
 
     intents = {"intents": []}
     intents["intents"] = make_intent(points, links)
@@ -146,3 +149,27 @@ if __name__ == '__main__':
     data = intents
     print("\n")
     print(json.dumps(data, indent=4))
+
+    deleteIntents.clear()
+    post_intents(intents)
+
+    while True:
+        src, dst, w = map(int, input("Input src, dst, w:\n").split())
+        graph.adj_mat[src - 1][dst - 1] = w
+        graph.adj_mat[dst - 1][src - 1] = w
+        path_list = graph.dijkstra(start_node)
+        print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
+        path_list = graph.dijkstra(start_node)
+
+        points = get_points(path_list)
+        print(points.list)
+
+        intents = {"intents": []}
+        intents["intents"] = make_intent(points, links)
+
+        points.list.reverse()
+        intents["intents"].extend(make_intent(points, links))
+        data = intents
+        deleteIntents.clear()
+        post_intents(intents)
+

@@ -104,9 +104,12 @@ def update_intents(intents):
         res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
         print(res)
 
-if __name__ == '__main__':
+def clear():
+    global IP
     IP = main.get_ip()
     intents = get_intents()
+    # update_intents(intents)
+    delete_all_intents(intents)
 
-    update_intents(intents)
-    #delete_all_intents(intents)
+if __name__ == '__main__':
+    clear()
