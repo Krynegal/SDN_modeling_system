@@ -1,10 +1,20 @@
 import requests as req
 import json
 import dijkstra
+import input_data
 import matrix
 
+
+def get_ip():
+    with open("D:/Scripts/vmIP.txt", "r") as f:
+        ip = f.readline().strip()
+    return ip
+
+
 USER = ("onos", "rocks")
-IP = "192.168.0.114"
+
+
+# IP = get_ip()
 
 
 def get_links():
@@ -27,22 +37,6 @@ class HostPair:
         self.h2 = h2
 
 
-############################# Без весов #############################
-# devices = []
-# for device in matrix.devices:
-#     devices.append(device[-1])
-# devices.sort()
-# nodes = []
-# for device_num in devices:
-#     nodes.append(dijkstra.Node("sw" + device_num))
-#
-# graph = dijkstra.Graph.create_from_nodes(nodes)
-# graph.adj_mat = dijkstra.matrix.get_matrix(dijkstra.matrix.links, len(dijkstra.matrix.devices))
-# graph.print_adj_mat()
-# n = graph.get_node_by_data("sw1")
-# print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(n)])
-# path_list = graph.dijkstra(n)
-
 def get_points(path_list):
     for list in path_list:
         nodes = list[1]
@@ -52,10 +46,6 @@ def get_points(path_list):
             points.list = num_nodes
             print()
     return points
-
-
-# points = Path(1, 2, 4, 3, 5, 6)
-# print(points.list)
 
 
 def make_intent(points, links):
@@ -98,50 +88,50 @@ def make_intent(points, links):
     return intents
 
 
-# for intent in data["intents"]:
-# res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
-# print(res)
+def post_intents(data):
+    for intent in data["intents"]:
+        res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
+    print(res)
+
 
 def get_devices_list(links) -> list:
     devices = []
     for link in links:
         devices.append(link["src"]["device"])
     devices = list(set(devices))
+    devices.sort()
     return devices
 
 
-def get_ip():
-    with open("D:/Scripts/vmIP.txt", "r", encoding="cp1251") as f:
-        ip = f.readline()
-        print(ip)
+def get_nodes(devices):
+    nodes = []
+    for device in devices:
+        nodes.append(dijkstra.Node(device))
+    return nodes
 
 
 if __name__ == '__main__':
+    IP = get_ip()
+
     links = get_links()
 
     devices = get_devices_list(links)
 
-    ####################### Использование весов #########################
-    a = dijkstra.Node("sw1")
-    b = dijkstra.Node("sw2")
-    c = dijkstra.Node("sw3")
-    d = dijkstra.Node("sw4")
-    e = dijkstra.Node("sw5")
-    f = dijkstra.Node("sw6")
+    nodes = get_nodes(devices)
+    print(nodes)
 
-    graph = dijkstra.Graph.create_from_nodes([a, b, c, d, e, f])
-    graph.connect(a, b, 5)
-    graph.connect(a, c, 10)
-    graph.connect(a, e, 2)
-    graph.connect(b, c, 2)
-    graph.connect(b, d, 4)
-    graph.connect(c, d, 7)
-    graph.connect(c, f, 10)
-    graph.connect(d, e, 3)
+    graph = dijkstra.Graph.create_from_nodes(nodes)
+
+    #################### No weights ######################
+    # Common adjacency matrix that tells us about the switches connections
+    # graph.adj_mat = matrix.get_matrix(links, len(devices))
+    ##################### Weights ########################
+    graph.adj_mat = input_data.main()
 
     graph.print_adj_mat()
-    print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(a)])
-    path_list = graph.dijkstra(a)
+    start_node = graph.get_node_by_data("of:0000000000000001")
+    print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
+    path_list = graph.dijkstra(start_node)
 
     #####################################################################
 

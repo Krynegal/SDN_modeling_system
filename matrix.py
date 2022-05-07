@@ -1,12 +1,3 @@
-import json
-
-with open("topology_links.json", "r") as f:
-    links = json.loads(f.read())["links"]
-#print(json.dumps(links, indent=4))
-
-
-
-
 def print_matrix(matrix):
     for row in matrix:
         print(row)
