@@ -1,3 +1,6 @@
+import sys
+
+import requests
 import requests as req
 import json
 
@@ -17,12 +20,16 @@ USER = ("onos", "rocks")
 
 
 def get_links():
-    res = req.get(f"http://{IP}:8181/onos/v1/links", auth=USER)
-    links = res.json()["links"]
-    with open("topology_links.json", "w") as f:
-        f.write(json.dumps(res.json(), indent=4))
-    print(json.dumps(res.json(), indent=4))
-    return links
+    try:
+        res = req.get(f"http://{IP}:8181/onos/v1/links", auth=USER)
+        links = res.json()["links"]
+        with open("topology_links.json", "w") as f:
+            f.write(json.dumps(res.json(), indent=4))
+        print(json.dumps(res.json(), indent=4))
+        return links
+    except requests.exceptions.ConnectionError:
+        print("Oops. Seems like dns lookup failed..")
+        sys.exit()
 
 
 class Path:
@@ -40,13 +47,11 @@ class HostPair:
 
 
 def get_points(path_list):
+    points = Path()
     for list in path_list:
         nodes = list[1]
-        #dst_host_num = host_pair.get_dst_host_num()
-        #hdnh = hex(int(dst_host_num))
         if nodes[-1].data[-1] == hex(int(host_pair.get_dst_host_num()))[2:]:
             num_nodes = [int(_.data[-1], 16) for _ in nodes]
-            points = Path()
             points.list = num_nodes
             print()
     return points
@@ -93,9 +98,16 @@ def make_intent(points, links):
 
 
 def post_intents(data):
+    intents_num = len(data["intents"])
+    successful_requests = 0
     for intent in data["intents"]:
         res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
-        print(res)
+        if res.status_code == 200:
+            successful_requests += 1
+    if successful_requests == intents_num:
+        print(f"{successful_requests}/{intents_num} were successfully sent")
+    else:
+        print(f"Oops. Only {successful_requests}/{intents_num} were successfully sent")
 
 
 def get_devices_list(links):
@@ -130,7 +142,7 @@ if __name__ == '__main__':
     # Common adjacency matrix that tells us about the switches connections
     graph.adj_mat = matrix.get_matrix(links, len(devices))
     ##################### Weights ########################
-    #graph.adj_mat = input_data.main()
+    # graph.adj_mat = input_data.main()
 
     graph.print_adj_mat()
     start_node = graph.get_node_by_data("of:0000000000000001")
@@ -143,8 +155,7 @@ if __name__ == '__main__':
     points = get_points(path_list)
     print(points.list)
 
-    intents = {"intents": []}
-    intents["intents"] = make_intent(points, links)
+    intents = {"intents": make_intent(points, links)}
     points.list.reverse()
     intents["intents"].extend(make_intent(points, links))
     data = intents
@@ -156,18 +167,16 @@ if __name__ == '__main__':
 
     while True:
         src, dst, w = map(int, input("Input src, dst, w:\n").split())
-        if graph.set_new_weigth(src, dst, w):
+        if graph.set_new_weight(src, dst, w):
             path_list = graph.dijkstra(start_node)
             print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
 
             points = get_points(path_list)
             print(points.list)
 
-            intents = {"intents": []}
-            intents["intents"] = make_intent(points, links)
+            intents = {"intents": make_intent(points, links)}
             points.list.reverse()
             intents["intents"].extend(make_intent(points, links))
 
             deleteIntents.clear()
             post_intents(intents)
-
