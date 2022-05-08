@@ -24,6 +24,15 @@ class Graph:
         node1, node2 = self.get_index_from_node(node1), self.get_index_from_node(node2)
         self.adj_mat[node1][node2] = weight
 
+    def set_new_weigth(self, dst, src, weigth):
+        if self.adj_mat[src - 1][dst - 1] == 0 and self.adj_mat[dst - 1][src - 1] == 0:
+            print("This connection is not exist!")
+            return False
+        self.adj_mat[src - 1][dst - 1] = weigth
+        self.adj_mat[dst - 1][src - 1] = weigth
+        return True
+
+
     # Опциональный весовой аргумент для поддержки алгоритма Дейкстры
     def connect(self, node1, node2, weight=1):
         self.connect_dir(node1, node2, weight)
@@ -101,6 +110,7 @@ class Graph:
         for node in self.nodes:
             if node.data == data:
                 return node
+
 
     def dijkstra(self, node):
         # Получает индекс узла (или поддерживает передачу int)
