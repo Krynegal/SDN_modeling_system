@@ -28,9 +28,9 @@ def delete_all_intents(intents):
         if res.status_code == 204:
             successful_requests += 1
     if successful_requests == intents_num:
-        print(f"{successful_requests}/{intents_num} were successful deleted")
+        print(f"{successful_requests}/{intents_num} were successfully deleted")
     else:
-        print(f"Oops. Only {successful_requests}/{intents_num} were successful deleted")
+        print(f"Oops. Only {successful_requests}/{intents_num} were successfully deleted")
         clear()
 
 def clear():
