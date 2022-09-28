@@ -63,12 +63,14 @@ def make_intent(points, hosts, links, reversed):
     src = f"of:000000000000000{hex(points.list[0])[2:]}"
     print(dst, src)
     ETH_DST = hosts[dst]["mac"]
+    print("ETH_DST ", ETH_DST)
     ETH_SRC = hosts[src]["mac"]
+    print("ETH_SRC ", ETH_SRC)
+    # if reversed:
+    #     ETH_DST, ETH_SRC = ETH_SRC, ETH_DST
     for point in range(0, len(points.list)):
         portIn = ""
         portOut = ""
-        if reversed:
-            ETH_DST, ETH_SRC = ETH_SRC, ETH_DST
 
         deviceId = f"of:000000000000000{hex(points.list[point])[2:]}"
         intent = {
@@ -198,7 +200,7 @@ if __name__ == '__main__':
     ##################### Weights ########################
     # graph.adj_mat = input_data.main()
 
-    start_node_num = 1
+    start_node_num = 4
 
     graph.print_adj_mat()
     start_node = graph.get_node_by_data(f"of:000000000000000{start_node_num}")
