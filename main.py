@@ -300,21 +300,21 @@ if __name__ == '__main__':
     points = get_points(path_list)
     print(points.list)
 
-    intents = {"intents": make_intent(points, links, False)}
-    points.list.reverse()
-    intents["intents"].extend(make_intent(points, links, True))
-    data = intents
-    # hosts_list = get_hosts()
-    # h = hosts(hosts_list)
-    # print(h)
-    # data = make_flows([1, 4, 3, 6], h, links)
+    # intents = {"intents": make_intent(points, links, False)}
+    # points.list.reverse()
+    # intents["intents"].extend(make_intent(points, links, True))
+    # data = intents
+    hosts_list = get_hosts()
+    h = hosts(hosts_list)
+    print(h)
+    data = make_flows([1, 4, 3, 6], h, links)
 
     print("\n")
     print(json.dumps(data, indent=4))
 
     #deleteIntents.clear()
-    #post_flows(data)
-    post_intents(intents)
+    post_flows(data)
+    #post_intents(intents)
 
     while True:
         src, dst, w = map(int, input("Input src, dst, w:\n").split())
@@ -325,18 +325,18 @@ if __name__ == '__main__':
             points = get_points(path_list)
             print(points.list)
 
-            intents = {"intents": make_intent(points, links, False)}
-            points.list.reverse()
-            intents["intents"].extend(make_intent(points, links, True))
-
-            deleteIntents.clear()
-            post_intents(intents)
+            # intents = {"intents": make_intent(points, links, False)}
+            # points.list.reverse()
+            # intents["intents"].extend(make_intent(points, links, True))
+            #
+            # deleteIntents.clear()
+            # post_intents(intents)
 
             #fwd_off()
-            # clearFlows()
-            #
-            # data = make_flows(points.list, h, links)
-            # post_flows(data)
+            clearFlows()
+
+            data = make_flows(points.list, h, links)
+            post_flows(data)
             #fwd_on()
 
 
