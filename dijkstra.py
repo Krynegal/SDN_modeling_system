@@ -24,7 +24,7 @@ class Graph:
         node1, node2 = self.get_index_from_node(node1), self.get_index_from_node(node2)
         self.adj_mat[node1][node2] = weight
 
-    def set_new_weigth(self, dst, src, weigth):
+    def set_new_weight(self, dst, src, weigth):
         if self.adj_mat[src - 1][dst - 1] == 0 and self.adj_mat[dst - 1][src - 1] == 0:
             print("This connection is not exist!")
             return False
