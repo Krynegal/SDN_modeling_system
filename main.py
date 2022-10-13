@@ -57,7 +57,7 @@ def get_points(path_list):
     return points
 
 
-def make_intent(points, hosts, links, reversed):
+def make_intent(points, hosts, links):
     intents = []
     dst = f"of:000000000000000{hex(points.list[len(points.list) - 1])[2:]}"
     src = f"of:000000000000000{hex(points.list[0])[2:]}"
@@ -66,8 +66,7 @@ def make_intent(points, hosts, links, reversed):
     print("ETH_DST ", ETH_DST)
     ETH_SRC = hosts[src]["mac"]
     print("ETH_SRC ", ETH_SRC)
-    # if reversed:
-    #     ETH_DST, ETH_SRC = ETH_SRC, ETH_DST
+
     for point in range(0, len(points.list)):
         portIn = ""
         portOut = ""
@@ -200,7 +199,7 @@ if __name__ == '__main__':
     ##################### Weights ########################
     # graph.adj_mat = input_data.main()
 
-    start_node_num = 4
+    start_node_num = 5
 
     graph.print_adj_mat()
     start_node = graph.get_node_by_data(f"of:000000000000000{start_node_num}")
@@ -216,9 +215,9 @@ if __name__ == '__main__':
     points = get_points(path_list)
     print(points.list)
 
-    intents = {"intents": make_intent(points, h, links, False)}
+    intents = {"intents": make_intent(points, h, links)}
     points.list.reverse()
-    intents["intents"].extend(make_intent(points, h, links, True))
+    intents["intents"].extend(make_intent(points, h, links))
     data = intents
 
     print("\n")
@@ -236,9 +235,9 @@ if __name__ == '__main__':
             points = get_points(path_list)
             print(points.list)
 
-            intents = {"intents": make_intent(points, h, links, False)}
+            intents = {"intents": make_intent(points, h, links)}
             points.list.reverse()
-            intents["intents"].extend(make_intent(points, h, links, True))
+            intents["intents"].extend(make_intent(points, h, links))
 
             deleteIntents.clear()
             post_intents(intents)
