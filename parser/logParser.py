@@ -15,10 +15,10 @@ with open(path + "res4.txt", "r") as f:
         logs.append(log)
     print(logs)
 
-with open("size.txt", "w") as f:
+with open("txtFiles/size.txt", "w") as f:
     for log in logs:
         f.write(log["size"]+"\n")
 
-with open("time.txt", "w") as f:
+with open("txtFiles/time.txt", "w") as f:
     for log in logs:
         f.write(log["txTime"]+"\n")

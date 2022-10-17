@@ -23,7 +23,7 @@ def get_links():
     try:
         res = req.get(f"http://{IP}:8181/onos/v1/links", auth=USER)
         links = res.json()["links"]
-        with open("topology_links.json", "w") as f:
+        with open("/jsonFiles/topology_links.json", "w") as f:
             f.write(json.dumps(res.json(), indent=4))
         print(json.dumps(res.json(), indent=4))
         return links
@@ -165,7 +165,7 @@ def get_hosts():
     try:
         res = req.get(f"http://172.17.0.2:8181/onos/v1/hosts", auth=USER)
         hosts = res.json()["hosts"]
-        with open("topology_hosts.json", "w") as f:
+        with open("/jsonFiles/topology_hosts.json", "w") as f:
             f.write(json.dumps(res.json(), indent=4))
         # print(json.dumps(res.json(), indent=4))
         return hosts
