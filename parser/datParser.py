@@ -7,6 +7,6 @@ with open(path + "combined_stats.dat", "r") as f:
         logs.append(split_line[0])
     print(logs)
 
-with open("txtFiles/t.txt", "w") as f:
+with open("/home/andre/PycharmProjects/onos_short_path/parser/txtFiles/T.txt", "w") as f:
     for l in logs:
         f.write(l.replace(".", ",")+"\n")
