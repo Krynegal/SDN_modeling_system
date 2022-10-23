@@ -116,6 +116,9 @@ def parse_p_args(input):
     return rate, size, protocol
 
 
+def run_many_to_one():
+    pass
+
 def run():
     print('---start of processing---')
     print('processing...')
