@@ -14,6 +14,8 @@ net = Mininet()
 c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
 
 onos_project_path = '/home/andre/PycharmProjects/onos_short_path/'
+topo_file = 'sixSwitches.txt'
+topo_path = onos_project_path + topo_file
 
 def get_ip_addrs(topo):
     g_nodes = topo.g.node
@@ -56,7 +58,7 @@ class Graph():
 class MyTopo(Topo):
     def build(self):
         nodes = []
-        with open(onos_project_path + "nodes.txt", "r") as f:
+        with open(topo_path, "r") as f:
             for line in f.readlines():
                 nodes.extend(line.strip().split(", "))
         nodes = list(set(nodes))
@@ -70,7 +72,7 @@ class MyTopo(Topo):
         graph = Graph.create_from_nodes(nodes)
 
         matrix = [[0] * len(nodes) for _ in range(len(nodes))]
-        with open(onos_project_path + "nodes.txt", "r") as f:
+        with open(topo_path, "r") as f:
             for line in f.readlines():
                 src, dst = map(int, line.strip().split(", "))
                 matrix[src - 1][dst - 1] = 1
