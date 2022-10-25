@@ -9,13 +9,63 @@ from mininet.cli import CLI
 import os
 from mininet.node import OVSSwitch, RemoteController
 
+#import traffic_types
+#from traffic_types import read_traffic_types, get_host_map, make_skripts, get_receivers, get_senders
+
 net = Mininet()
 
 c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
 
 onos_project_path = '/home/andre/PycharmProjects/onos_short_path/'
+path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
+customPath = '/home/andre/mininet/custom/'
 topo_file = 'sixSwitches.txt'
 topo_path = onos_project_path + topo_file
+
+
+def read_traffic_types():
+    res = []
+    with open("traffic_types.txt", "r") as f:
+        for line in f.readlines():
+            splited_line = line.strip("\n").split(";")
+            protocol = splited_line[0]
+            pairs = [x.strip().split(",") for x in splited_line[1:]]
+            res.append([protocol, pairs])
+    print(res)
+    return res
+
+def get_host_map(nodes):
+    m = {}
+    for node in nodes:
+        if 'ip' in nodes[node]:
+            m[node[1:]] = nodes[node]['ip']
+    print(m)
+    return m
+
+def get_receivers(traffic):
+    receivers = []
+    for t in traffic:
+        for n in t[1]:
+            receivers.append(n[1])
+    return list(set(receivers))
+
+def get_senders(traffic):
+    senders = []
+    for t in traffic:
+        for n in t[1]:
+            senders.append(n[0])
+    return list(set(senders))
+
+def make_skripts(traffic, h_map):
+    os.system(f'cd {onos_project_path} && rm script*')
+    for t in traffic:
+        for h in t[1]:
+            with open(f"script{h[0]}", "a") as f:
+                f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
+            os.chmod(rf"script{h[0]}", 0o777)
+
+
+##############################################################################################33
 
 def get_ip_addrs(topo):
     g_nodes = topo.g.node
@@ -35,7 +85,7 @@ def generate_scripts(addrs, rate=1000, pkt_size=512, protocol='UDP'):
                 if i == j:
                     continue
                 f.writelines(f"-a {addrs[j]} -C {rate} -c {pkt_size} -T {protocol}\n")
-
+        os.chmod(rf"script{i}.txt", 0o777)
 
 class Node():
     def __init__(self, data, indexloc=None):
@@ -109,17 +159,27 @@ for i in range(1, hosts_num + 1):
     list_of_hosts.append(net.get(f'h{i}'))
 print(list_of_hosts)
 
-path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-customPath = '/home/andre/mininet/custom/'
-
 
 def parse_p_args(input):
     rate, size, protocol = input[1], input[2], input[3]
     return rate, size, protocol
 
 
-def run_many_to_one():
-    pass
+def run_custom(senders, receivers):
+    print('---start of processing---')
+    print('processing...')
+    print('receivers', receivers)
+    for i in receivers:
+        list_of_hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
+    for i in receivers:
+        list_of_hosts[int(i) - 1].cmd('cd ' + path + f' && ./ITGRecv -l recv{i}.log &')
+    time.sleep(3)
+
+    print('senders', senders)
+    for i in senders:
+        list_of_hosts[int(i) - 1].cmd('cd ' + path + f' && ./ITGSend {onos_project_path}script{i} -l send_{i}_to_all.log &')
+    time.sleep(5)
+    print('---end of processing---')
 
 def run():
     print('---start of processing---')
@@ -137,12 +197,20 @@ def run():
 
 
 while True:
-    print('input "c" to run console')
+    print('input "m" to run mininet console')
+    print('input "c" to run custom')
     print('input "g <rate> <size> <protocol>" to generate scripts')
     input_row = input()
     i = input_row.split()
-    if len(i) == 1 and i[0] == 'c':
+    if len(i) == 1 and i[0] == 'm':
         CLI(net)
+    elif i[0] == 'c':
+        tt = read_traffic_types()
+        host_map = get_host_map(topo.g.node)
+        receivers = get_receivers(tt)
+        senders = get_senders(tt)
+        make_skripts(tt, host_map)
+        run_custom(senders, receivers)
     elif i[0] == 'g':
         if len(i) == 1:
             os.system(f'cd {path} && ./deleteLogs.sh')

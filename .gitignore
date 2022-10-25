@@ -1,3 +1,4 @@
 *.txt
 .idea
 parser/.ipynb_checkpoints/
+script*
