@@ -57,7 +57,9 @@ def get_senders(traffic):
     return list(set(senders))
 
 def make_skripts(traffic, h_map):
-    os.system(f'cd {onos_project_path} && rm script*')
+    check_file = os.path.exists(f'{onos_project_path}script*')
+    if check_file:
+        os.system(f'cd {onos_project_path} && rm script*')
     for t in traffic:
         for h in t[1]:
             with open(f"script{h[0]}", "a") as f:
