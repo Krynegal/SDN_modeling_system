@@ -19,13 +19,13 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 onos_project_path = '/home/andre/PycharmProjects/onos_short_path/'
 path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 customPath = '/home/andre/mininet/custom/'
-topo_file = 'sixSwitches.txt'
+topo_file = 'nodes.txt'
 topo_path = onos_project_path + topo_file
 
 
 def read_traffic_types():
     res = []
-    with open("traffic_types.txt", "r") as f:
+    with open(f"{onos_project_path}traffic_types.txt", "r") as f:
         for line in f.readlines():
             splited_line = line.strip("\n").split(";")
             protocol = splited_line[0]
@@ -62,14 +62,15 @@ def get_senders(traffic):
 
 
 def make_scripts(traffic, h_map):
-    check_file = os.path.exists(f'{onos_project_path}script*')
-    if check_file:
-        os.system(f'cd {onos_project_path} && rm script*')
+    # check_file = os.path.exists(f'{onos_project_path}script*')
+    # if check_file:
+    #     os.system(f'cd {onos_project_path} && rm script*')
+    os.system(f'cd {onos_project_path} && rm script* -f')
     for t in traffic:
         for h in t[1]:
-            with open(f"script{h[0]}", "a") as f:
+            with open(f"{onos_project_path}script{h[0]}", "a") as f:
                 f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
-            os.chmod(rf"script{h[0]}", 0o777)
+            os.chmod(rf"{onos_project_path}script{h[0]}", 0o777)
 
 
 ##############################################################################################33
@@ -86,13 +87,17 @@ def make_scripts(traffic, h_map):
 
 
 def generate_scripts(h_map, rate=1000, pkt_size=512, protocol='UDP'):
+    # check_file = os.path.exists(f'{onos_project_path}script*')
+    # if check_file:
+    #     os.system(f'cd {onos_project_path} && rm script*')
+    os.system(f'cd {onos_project_path} && rm script* -f')
     for k in h_map.keys():
-        with open(f"script{k}", "w") as f:
+        with open(f"{onos_project_path}script{k}", "w") as f:
             for addr in h_map.values():
                 if f'192.168.0.{k}' == addr:
                     continue
                 f.writelines(f"-a {addr} -C {rate} -c {pkt_size} -T {protocol}\n")
-        os.chmod(rf"script{k}", 0o777)
+        os.chmod(rf"{onos_project_path}script{k}", 0o777)
 
 
 class Node():
@@ -122,10 +127,8 @@ class MyTopo(Topo):
         nodes = list(set(nodes))
         nodes.sort(key=int)
         print(nodes)
-
         for i in range(len(nodes)):
             nodes[i] = Node(nodes[i])
-        print(nodes)
 
         graph = Graph.create_from_nodes(nodes)
 
@@ -137,9 +140,9 @@ class MyTopo(Topo):
                 matrix[dst - 1][src - 1] = 1
 
         graph.adj_mat = matrix
-
         hosts = []
         switches = []
+        print('len(graph.nodes): ', len(graph.nodes))
         for i in range(len(graph.nodes)):
             switches.append(self.addSwitch('s' + graph.nodes[i].data, protocols="OpenFlow13"))
             hosts.append(self.addHost('h' + str(i + 1), ip='192.168.0.' + str(i + 1)))
@@ -217,18 +220,20 @@ while True:
     if len(i) == 1 and i[0] == 'm':
         CLI(net)
     elif i[0] == 'c':
+        os.system(f'cd {path} && ./deleteLogs.sh')
+        os.system(f'cd {path} && rm *.dat -f')
         tt = read_traffic_types()
         receivers = get_receivers(tt)
         senders = get_senders(tt)
         make_scripts(tt, host_addr_map)
         run_custom(senders, receivers)
     elif i[0] == 'g':
+        os.system(f'cd {path} && ./deleteLogs.sh')
+        os.system(f'cd {path} && rm *.dat -f')
         if len(i) == 1:
-            os.system(f'cd {path} && ./deleteLogs.sh')
             generate_scripts(host_addr_map)
             run()
         elif len(i) == 4:
-            os.system(f'cd {path} && ./deleteLogs.sh')
             rate, size, protocol = parse_p_args(i)
             generate_scripts(host_addr_map, rate, size, protocol)
             run()
