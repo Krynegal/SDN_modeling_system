@@ -6,3 +6,4 @@
 parser/.ipynb_checkpoints/
 
 script*
+!core/scripters.py
