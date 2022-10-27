@@ -48,6 +48,7 @@ class MyTopo(Topo):
         with open(topo_path, "r") as f:
             for line in f.readlines():
                 nodes.extend(line.strip().split(", "))
+
         nodes = list(set(nodes))
         nodes.sort(key=int)
         print(nodes)

@@ -1,7 +1,6 @@
 import sys
 
 import requests as req
-import json
 
 import requests.exceptions
 
