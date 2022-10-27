@@ -1,103 +1,40 @@
 #!/usr/bin/python
-
+import os
+import sys
 import time
-
 from mininet.net import Mininet
 from mininet.topo import Topo
-from mininet.link import TCLink
 from mininet.cli import CLI
-import os
-from mininet.node import OVSSwitch, RemoteController
+from mininet.node import RemoteController
 
-# import traffic_types
-# from traffic_types import read_traffic_types, get_host_map, make_skripts, get_receivers, get_senders
+conf_path = os.getcwd()
+sys.path.append(conf_path)
+from utils import read_traffic_types, host_addr_map, make_scripts, get_receivers, get_senders
 
 net = Mininet()
 
 c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
 
-onos_project_path = '/home/andre/PycharmProjects/onos_short_path/'
+core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
+scripts_path = core_path + 'scripts/'
 path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 customPath = '/home/andre/mininet/custom/'
-topo_file = 'nodes.txt'
-topo_path = onos_project_path + topo_file
-
-
-def read_traffic_types():
-    res = []
-    with open(f"{onos_project_path}traffic_types.txt", "r") as f:
-        for line in f.readlines():
-            splited_line = line.strip("\n").split(";")
-            protocol = splited_line[0]
-            pairs = [x.strip().split(",") for x in splited_line[1:]]
-            res.append([protocol, pairs])
-    print(res)
-    return res
-
-
-def host_addr_map(topo):
-    g_nodes = topo.g.node
-    m = {}
-    for node in g_nodes:
-        if 'ip' in g_nodes[node]:
-            m[node[1:]] = g_nodes[node]['ip']
-    print(f'host_addr_map: {m}\n')
-    return m
-
-
-def get_receivers(traffic):
-    receivers = []
-    for t in traffic:
-        for n in t[1]:
-            receivers.append(n[1])
-    return list(set(receivers))
-
-
-def get_senders(traffic):
-    senders = []
-    for t in traffic:
-        for n in t[1]:
-            senders.append(n[0])
-    return list(set(senders))
-
-
-def make_scripts(traffic, h_map):
-    # check_file = os.path.exists(f'{onos_project_path}script*')
-    # if check_file:
-    #     os.system(f'cd {onos_project_path} && rm script*')
-    os.system(f'cd {onos_project_path} && rm script* -f')
-    for t in traffic:
-        for h in t[1]:
-            with open(f"{onos_project_path}script{h[0]}", "a") as f:
-                f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
-            os.chmod(rf"{onos_project_path}script{h[0]}", 0o777)
-
-
-##############################################################################################33
-
-# def get_ip_addrs(topo):
-#     g_nodes = topo.g.node
-#     addrs = []
-#     hosts_num = 0
-#     for node_v in g_nodes.values():
-#         if 'ip' in node_v:
-#             addrs.append(node_v["ip"])
-#             hosts_num += 1
-#     return addrs, hosts_num
+topo_file = 'topologies/edges10.txt'
+topo_path = core_path + topo_file
 
 
 def generate_scripts(h_map, rate=1000, pkt_size=512, protocol='UDP'):
-    # check_file = os.path.exists(f'{onos_project_path}script*')
+    # check_file = os.path.exists(f'{core_path}script*')
     # if check_file:
-    #     os.system(f'cd {onos_project_path} && rm script*')
-    os.system(f'cd {onos_project_path} && rm script* -f')
+    #     os.system(f'cd {core_path} && rm script*')
+    os.system(f'cd {scripts_path} && rm script* -f')
     for k in h_map.keys():
-        with open(f"{onos_project_path}script{k}", "w") as f:
+        with open(f"{scripts_path}script{k}", "w") as f:
             for addr in h_map.values():
                 if f'192.168.0.{k}' == addr:
                     continue
                 f.writelines(f"-a {addr} -C {rate} -c {pkt_size} -T {protocol}\n")
-        os.chmod(rf"{onos_project_path}script{k}", 0o777)
+        os.chmod(rf"{scripts_path}script{k}", 0o777)
 
 
 class Node():
@@ -162,9 +99,8 @@ net.build()
 net.start()
 time.sleep(5)
 net.pingAll()
-time.sleep(3)
+#time.sleep(3)
 
-#addrs, hosts_num = get_ip_addrs(topo)
 host_addr_map = host_addr_map(topo)
 list_of_hosts = []
 hosts_num = len(host_addr_map)
@@ -191,7 +127,7 @@ def run_custom(senders, receivers):
     print('senders', senders)
     for i in senders:
         list_of_hosts[int(i) - 1].cmd(
-            'cd ' + path + f' && ./ITGSend {onos_project_path}script{i} -l send_{i}_to_all.log &')
+            'cd ' + path + f' && ./ITGSend {scripts_path}script{i} -l send_{i}_to_all.log &')
     time.sleep(5)
     print('---end of processing---')
 
@@ -206,7 +142,7 @@ def run():
     time.sleep(3)
 
     for i in range(1, hosts_num + 1):
-        list_of_hosts[i - 1].cmd('cd ' + path + f' && ./ITGSend {onos_project_path}script{i} -l send_{i}_to_all.log &')
+        list_of_hosts[i - 1].cmd('cd ' + path + f' && ./ITGSend {scripts_path}script{i} -l send_{i}_to_all.log &')
     time.sleep(5)
     print('---end of processing---')
 

@@ -1,5 +1,8 @@
-*.txt
-!traffic_types.txt
 .idea
+
+*.txt
+!core/custom_traffic.txt
+
 parser/.ipynb_checkpoints/
+
 script*
