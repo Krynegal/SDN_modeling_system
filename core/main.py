@@ -9,7 +9,9 @@ from mininet.node import RemoteController
 
 conf_path = os.getcwd()
 sys.path.append(conf_path)
-from utils import read_traffic_types, host_addr_map, make_scripts, get_receivers, get_senders
+from utils import host_addr_map, get_receivers, get_senders
+from scripters import generate_custom, generate_all_to_all, read_custom_traffic
+from runners import run_all, run_custom
 
 net = Mininet()
 
@@ -17,24 +19,9 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
-path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-customPath = '/home/andre/mininet/custom/'
+itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 topo_file = 'topologies/edges10.txt'
 topo_path = core_path + topo_file
-
-
-def generate_scripts(h_map, rate=1000, pkt_size=512, protocol='UDP'):
-    # check_file = os.path.exists(f'{core_path}script*')
-    # if check_file:
-    #     os.system(f'cd {core_path} && rm script*')
-    os.system(f'cd {scripts_path} && rm script* -f')
-    for k in h_map.keys():
-        with open(f"{scripts_path}script{k}", "w") as f:
-            for addr in h_map.values():
-                if f'192.168.0.{k}' == addr:
-                    continue
-                f.writelines(f"-a {addr} -C {rate} -c {pkt_size} -T {protocol}\n")
-        os.chmod(rf"{scripts_path}script{k}", 0o777)
 
 
 class Node():
@@ -99,14 +86,12 @@ net.build()
 net.start()
 time.sleep(5)
 net.pingAll()
-#time.sleep(3)
 
 host_addr_map = host_addr_map(topo)
-list_of_hosts = []
-hosts_num = len(host_addr_map)
+hosts = []
 for h_key in host_addr_map.keys():
-    list_of_hosts.append(net.get(f'h{h_key}'))
-print(list_of_hosts)
+    hosts.append(net.get(f'h{h_key}'))
+print(hosts)
 
 
 def parse_p_args(input):
@@ -114,72 +99,41 @@ def parse_p_args(input):
     return rate, size, protocol
 
 
-def run_custom(senders, receivers):
-    print('---start of processing---')
-    print('processing...')
-    print('receivers', receivers)
-    for i in receivers:
-        list_of_hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
-    for i in receivers:
-        list_of_hosts[int(i) - 1].cmd('cd ' + path + f' && ./ITGRecv -l recv{i}.log &')
-    time.sleep(3)
-
-    print('senders', senders)
-    for i in senders:
-        list_of_hosts[int(i) - 1].cmd(
-            'cd ' + path + f' && ./ITGSend {scripts_path}script{i} -l send_{i}_to_all.log &')
-    time.sleep(5)
-    print('---end of processing---')
-
-
-def run():
-    print('---start of processing---')
-    print('processing...')
-    for i in range(1, hosts_num + 1):
-        list_of_hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
-    for i in range(1, hosts_num + 1):
-        list_of_hosts[i - 1].cmd('cd ' + path + f' && ./ITGRecv -l recv{i}.log &')
-    time.sleep(3)
-
-    for i in range(1, hosts_num + 1):
-        list_of_hosts[i - 1].cmd('cd ' + path + f' && ./ITGSend {scripts_path}script{i} -l send_{i}_to_all.log &')
-    time.sleep(5)
-    print('---end of processing---')
+def delete_old_files():
+    os.system(f'cd {itg_path} && ./deleteLogs.sh')
+    os.system(f'cd {itg_path} && ./deleteDat.sh')
 
 
 while True:
     print('input "m" to run mininet console')
     print('input "c" to run custom')
     print('input "g <rate> <size> <protocol>" to generate scripts')
-    input_row = input()
-    i = input_row.split()
-    if len(i) == 1 and i[0] == 'm':
+    input_line = input().split()
+    if len(input_line) == 1 and input_line[0] == 'm':
         CLI(net)
-    elif i[0] == 'c':
-        os.system(f'cd {path} && ./deleteLogs.sh')
-        os.system(f'cd {path} && rm *.dat -f')
-        tt = read_traffic_types()
-        receivers = get_receivers(tt)
-        senders = get_senders(tt)
-        make_scripts(tt, host_addr_map)
-        run_custom(senders, receivers)
-    elif i[0] == 'g':
-        os.system(f'cd {path} && ./deleteLogs.sh')
-        os.system(f'cd {path} && rm *.dat -f')
-        if len(i) == 1:
-            generate_scripts(host_addr_map)
-            run()
-        elif len(i) == 4:
-            rate, size, protocol = parse_p_args(i)
-            generate_scripts(host_addr_map, rate, size, protocol)
-            run()
+    elif input_line[0] == 'c':
+        delete_old_files()
+        traffic = read_custom_traffic()
+        receivers = get_receivers(traffic)
+        senders = get_senders(traffic)
+        generate_custom(host_addr_map, traffic)
+        run_custom(hosts, senders, receivers)
+    elif input_line[0] == 'g':
+        delete_old_files()
+        if len(input_line) == 1:
+            generate_all_to_all(host_addr_map)
+            run_all(hosts)
+        elif len(input_line) == 4:
+            rate, size, protocol = parse_p_args(input_line)
+            generate_all_to_all(host_addr_map, rate, size, protocol)
+            run_all(hosts)
         else:
             print('some args were skipped')
             continue
-    elif i[0] == 'k':
-        for i in range(1, hosts_num + 1):
-            list_of_hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
-    elif i[0] == 'q':
+    elif input_line[0] == 'k':
+        for i in range(1, len(hosts) + 1):
+            hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
+    elif input_line[0] == 'q':
         break
 
 net.stop()
