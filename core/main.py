@@ -20,7 +20,7 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/edges10.txt'
+topo_file = 'topologies/edges6.txt'
 topo_path = core_path + topo_file
 
 
@@ -103,6 +103,7 @@ def parse_p_args(input):
 def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteLogs.sh')
     os.system(f'cd {itg_path} && ./deleteDat.sh')
+    os.system(f'cd {itg_path} && ./deleteTxt.sh')
 
 
 while True:
