@@ -5,6 +5,7 @@ import time
 from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.cli import CLI
+from mininet.link import TCLink
 from mininet.node import RemoteController
 
 conf_path = os.getcwd()
@@ -20,7 +21,7 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/edges10.txt'
+topo_file = 'topologies/edges20.txt'
 topo_path = core_path + topo_file
 
 
@@ -71,17 +72,17 @@ class MyTopo(Topo):
         for i in range(len(graph.nodes)):
             switches.append(self.addSwitch('s' + graph.nodes[i].data, protocols="OpenFlow13"))
             hosts.append(self.addHost('h' + str(i + 1), ip='192.168.0.' + str(i + 1)))
-            self.addLink(switches[i], hosts[i])
+            self.addLink(switches[i], hosts[i], bw=10)
 
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
-                    self.addLink(switches[row], switches[col])
+                    self.addLink(switches[row], switches[col], bw=10)
 
 
 topo = MyTopo()
-net = Mininet(topo=topo, controller=RemoteController, build=False)
+net = Mininet(topo=topo, controller=RemoteController, build=False, link=TCLink)
 net.addController(c0)
 net.build()
 net.start()
@@ -92,7 +93,7 @@ host_addr_map = host_addr_map(topo)
 hosts = []
 for h_key in host_addr_map.keys():
     hosts.append(net.get(f'h{h_key}'))
-print(hosts)
+# print(hosts)
 
 
 def parse_p_args(input):
@@ -103,6 +104,7 @@ def parse_p_args(input):
 def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteLogs.sh')
     os.system(f'cd {itg_path} && ./deleteDat.sh')
+    os.system(f'cd {itg_path} && ./deleteTxt.sh')
 
 
 while True:
