@@ -22,7 +22,10 @@ def generate_custom(h_map, traffic):
     for t in traffic:
         for h in t[1]:
             with open(f"{scripts_path}script{h[0]}", "a") as f:
-                f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
+                if t[0] in ["TCP", "UDP"]:
+                    f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
+                else:
+                    f.writelines(f"-a {h_map[h[1]]} {t[0]}\n")
             os.chmod(rf"{scripts_path}script{h[0]}", 0o777)
 
 
