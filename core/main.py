@@ -21,7 +21,7 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/edges20.txt'
+topo_file = 'topologies/edges6.txt'
 topo_path = core_path + topo_file
 
 
