@@ -1,4 +1,5 @@
 import os
+import random
 
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
@@ -23,6 +24,8 @@ def generate_custom(h_map, traffic):
         for h in t[1]:
             with open(f"{scripts_path}script{h[0]}", "a") as f:
                 if t[0] in ["TCP", "UDP"]:
+                    # rec_port = random.randint(8999, 11000)
+                    # -rp {rec_port}
                     f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
                 else:
                     f.writelines(f"-a {h_map[h[1]]} {t[0]}\n")
@@ -36,5 +39,7 @@ def generate_all_to_all(h_map, rate=1000, pkt_size=512, protocol='UDP'):
             for addr in h_map.values():
                 if h_map[k] == addr:
                     continue
-                f.writelines(f"-a {addr} -C {rate} -c {pkt_size} -T {protocol}\n")
+                rec_port = random.randint(8999, 11000)
+                # -rp {rec_port}
+                f.writelines(f"-a {addr} -rp {rec_port} -C {rate} -c {pkt_size} -T {protocol}\n")
         os.chmod(rf"{scripts_path}script{k}", 0o777)
