@@ -78,6 +78,7 @@ class MyTopo(Topo):
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
+                    # , max_queue_size=1000
                     self.addLink(switches[row], switches[col], bw=10)
 
 
