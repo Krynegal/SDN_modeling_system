@@ -21,7 +21,7 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/edges6.txt'
+topo_file = 'topologies/edges15.txt'
 topo_path = core_path + topo_file
 
 
@@ -98,8 +98,8 @@ for h_key in host_addr_map.keys():
 
 
 def parse_p_args(input):
-    rate, size, protocol = input[1], input[2], input[3]
-    return rate, size, protocol
+    rate, size, time, protocol = input[1], input[2], input[3], input[4]
+    return rate, size, time, protocol
 
 
 def delete_old_files():
@@ -111,7 +111,7 @@ def delete_old_files():
 while True:
     print('input "m" to run mininet console')
     print('input "c" to run custom')
-    print('input "g <rate> <size> <protocol>" to generate scripts')
+    print('input "g <rate> <size> <time (ms)> <protocol>" to generate scripts')
     input_line = input().split()
     if len(input_line) == 1 and input_line[0] == 'm':
         CLI(net)
@@ -127,9 +127,9 @@ while True:
         if len(input_line) == 1:
             generate_all_to_all(host_addr_map)
             run_all(hosts)
-        elif len(input_line) == 4:
-            rate, size, protocol = parse_p_args(input_line)
-            generate_all_to_all(host_addr_map, rate, size, protocol)
+        elif len(input_line) == 5:
+            rate, size, time, protocol = parse_p_args(input_line)
+            generate_all_to_all(host_addr_map, rate, size, time, protocol)
             run_all(hosts)
         else:
             print('some args were skipped')
