@@ -24,9 +24,9 @@ def generate_custom(h_map, traffic):
         for h in t[1]:
             with open(f"{scripts_path}script{h[0]}", "a") as f:
                 if t[0] in ["TCP", "UDP"]:
-                    # rec_port = random.randint(8999, 11000)
-                    # -rp {rec_port}
-                    f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
+                    rec_port = random.randint(8999, 11000)
+                    #-rp {rec_port}
+                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C 1000 -c 1000 -t 60000 -T {t[0]}\n")
                 else:
                     f.writelines(f"-a {h_map[h[1]]} {t[0]}\n")
             os.chmod(rf"{scripts_path}script{h[0]}", 0o777)

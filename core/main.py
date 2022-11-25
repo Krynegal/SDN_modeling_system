@@ -72,14 +72,14 @@ class MyTopo(Topo):
         for i in range(len(graph.nodes)):
             switches.append(self.addSwitch('s' + graph.nodes[i].data, protocols="OpenFlow13"))
             hosts.append(self.addHost('h' + str(i + 1), ip='192.168.0.' + str(i + 1)))
-            self.addLink(switches[i], hosts[i], bw=10)
+            self.addLink(switches[i], hosts[i], bw=1000)
 
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
                     # , max_queue_size=1000
-                    self.addLink(switches[row], switches[col], bw=10)
+                    self.addLink(switches[row], switches[col], bw=1000)
 
 
 topo = MyTopo()
