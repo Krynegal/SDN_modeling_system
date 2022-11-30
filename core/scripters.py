@@ -24,15 +24,15 @@ def generate_custom(h_map, traffic):
         for h in t[1]:
             with open(f"{scripts_path}script{h[0]}", "a") as f:
                 if t[0] in ["TCP", "UDP"]:
-                    # rec_port = random.randint(8999, 11000)
-                    # -rp {rec_port}
-                    f.writelines(f"-a {h_map[h[1]]} -C 1000 -c 500 -T {t[0]}\n")
+                    rec_port = random.randint(8999, 11000)
+                    #-rp {rec_port}
+                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C 1000 -c 1000 -t 60000 -T {t[0]}\n")
                 else:
                     f.writelines(f"-a {h_map[h[1]]} {t[0]}\n")
             os.chmod(rf"{scripts_path}script{h[0]}", 0o777)
 
 
-def generate_all_to_all(h_map, rate=1000, pkt_size=512, protocol='UDP'):
+def generate_all_to_all(h_map, rate=1000, pkt_size=512, time=10000, protocol='UDP'):
     os.system(f'cd {scripts_path} && rm script* -f')
     for k in h_map.keys():
         with open(f"{scripts_path}script{k}", "w") as f:
@@ -41,5 +41,5 @@ def generate_all_to_all(h_map, rate=1000, pkt_size=512, protocol='UDP'):
                     continue
                 rec_port = random.randint(8999, 11000)
                 # -rp {rec_port}
-                f.writelines(f"-a {addr} -rp {rec_port} -C {rate} -c {pkt_size} -T {protocol}\n")
+                f.writelines(f"-a {addr} -rp {rec_port} -C {rate} -c {pkt_size} -t {time} -T {protocol}\n")
         os.chmod(rf"{scripts_path}script{k}", 0o777)

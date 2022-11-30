@@ -34,5 +34,7 @@ def run_all(hosts: []):
 
     for i in range(1, hosts_num + 1):
         hosts[i - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} -l send_all_{i}.log &')
-    time.sleep(5)
+    time.sleep(60)
+    for i in range(1, len(hosts) + 1):
+        hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
     print('---end of processing---')
