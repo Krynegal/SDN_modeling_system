@@ -22,7 +22,7 @@ def get_links():
     try:
         res = req.get(f"http://{IP}:8181/onos/v1/links", auth=USER)
         links = res.json()["links"]
-        with open("/jsonFiles/topology_links.json", "w") as f:
+        with open("../jsonFiles/topology_links.json", "w") as f:
             f.write(json.dumps(res.json(), indent=4))
         print(json.dumps(res.json(), indent=4))
         return links
@@ -45,7 +45,7 @@ class HostPair:
         return self.h2[1:]
 
 
-def get_points(path_list):
+def get_points(path_list, host_pair):
     points = Path()
     for list in path_list:
         nodes = list[1]
@@ -106,8 +106,8 @@ def make_intent(points, hosts, links):
             if link["src"]["device"] == deviceId and int(link["dst"]["device"][-1], 16) in points.list:
                 if point < 1:
                     intent["ingressPoint"]["port"] = "1"
-                if (link["dst"]["device"] == f"of:000000000000000{hex(points.list[point - 1])[2:]}"
-                        and points.list[point - 1] in points.list):
+                elif (link["dst"]["device"] == f"of:000000000000000{hex(points.list[point - 1])[2:]}"
+                      and points.list[point - 1] in points.list):
                     portIn = link["src"]["port"]
                     intent["ingressPoint"]["port"] = portIn
                 if point + 1 > len(points.list) - 1:
@@ -164,7 +164,7 @@ def get_hosts():
     try:
         res = req.get(f"http://172.17.0.2:8181/onos/v1/hosts", auth=USER)
         hosts = res.json()["hosts"]
-        with open("/jsonFiles/topology_hosts.json", "w") as f:
+        with open("../jsonFiles/topology_hosts.json", "w") as f:
             f.write(json.dumps(res.json(), indent=4))
         # print(json.dumps(res.json(), indent=4))
         return hosts
@@ -178,6 +178,66 @@ def hosts(hosts):
     for host in hosts:
         h[host["locations"][0]["elementId"]] = {"mac": host["mac"], "ip": host["ipAddresses"][0]}
     return h
+
+
+def read_custom_traffic():
+    res = []
+    core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
+    custom_t_file_path = core_path + 'custom_traffic.txt'
+    with open(f"{custom_t_file_path}", "r") as f:
+        for line in f.readlines():
+            split_line = line.strip("\n").split(";")
+            protocol = split_line[0]
+            pairs = [x.strip().split(",") for x in split_line[1:]]
+            res.append([protocol, pairs])
+    print('custom traffic:', res)
+    return res
+
+
+def get_receivers(traffic):
+    receivers = []
+    for t in traffic:
+        for n in t[1]:
+            receivers.append(n[1])
+    return list(set(receivers))
+
+
+def get_senders(traffic):
+    senders = []
+    for t in traffic:
+        for n in t[1]:
+            senders.append(n[0])
+    return list(set(senders))
+
+
+def get_src_dst_map():
+    traffic = read_custom_traffic()
+    src_dst_map = {}
+    for pair in traffic[0][1]:
+        if pair[0] not in src_dst_map:
+            src_dst_map[pair[0]] = []
+        src_dst_map[pair[0]].extend(pair[1])
+    print(src_dst_map)
+    return src_dst_map
+
+
+def make_intents_for_pair(src, target: int):
+    graph.print_adj_mat()
+    start_node = graph.get_node_by_data(f"of:000000000000000{src}")
+    print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
+    path_list = graph.dijkstra(start_node)
+
+    hosts_list = get_hosts()
+    h = hosts(hosts_list)
+
+    host_pair = HostPair(f"h{src}", f"h{target}")
+    points = get_points(path_list, host_pair)
+    print(points.list)
+
+    res_intents = make_intent(points, h, links)
+    points.list.reverse()
+    res_intents.extend(make_intent(points, h, links))
+    return res_intents
 
 
 if __name__ == '__main__':
@@ -198,45 +258,59 @@ if __name__ == '__main__':
     ##################### Weights ########################
     # graph.adj_mat = input_data.main()
 
-    start_node_num = 5
+    # start_node_num = 5
+    #
+    # graph.print_adj_mat()
+    # start_node = graph.get_node_by_data(f"of:000000000000000{start_node_num}")
+    # print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
+    # path_list = graph.dijkstra(start_node)
+    #
+    # #####################################################################
+    #
+    # hosts_list = get_hosts()
+    # h = hosts(hosts_list)
+    #
+    # host_pair = HostPair(f"h{start_node_num}", "h6")
+    # points = get_points(path_list, host_pair)
+    # print(points.list)
 
-    graph.print_adj_mat()
-    start_node = graph.get_node_by_data(f"of:000000000000000{start_node_num}")
-    print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
-    path_list = graph.dijkstra(start_node)
+    # intents = {"intents": make_intent(points, h, links)}
+    # points.list.reverse()
+    # intents["intents"].extend(make_intent(points, h, links))
+    # data = intents
+    # print("\n")
+    # print(json.dumps(data, indent=4))
 
-    #####################################################################
+    pair_intents = []
+    src_dst_map = get_src_dst_map()
+    for key in src_dst_map:
+        src = int(key)
+        for value in src_dst_map[key]:
+            target = int(value)
+            pair_intents.extend(make_intents_for_pair(src, target))
 
-    hosts_list = get_hosts()
-    h = hosts(hosts_list)
-
-    host_pair = HostPair(f"h{start_node_num}", "h6")
-    points = get_points(path_list)
-    print(points.list)
-
-    intents = {"intents": make_intent(points, h, links)}
-    points.list.reverse()
-    intents["intents"].extend(make_intent(points, h, links))
-    data = intents
+    # pair_intents = make_intents_for_pair(5, 6)
 
     print("\n")
-    print(json.dumps(data, indent=4))
+    print(json.dumps(pair_intents, indent=4))
 
-    #deleteIntents.clear()
+    # deleteIntents.clear()
+    #post_intents(intents)
+    intents = {"intents": pair_intents}
     post_intents(intents)
 
-    while True:
-        src, dst, w = map(int, input("Input src, dst, w:\n").split())
-        if graph.set_new_weight(src, dst, w):
-            path_list = graph.dijkstra(start_node)
-            print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
-
-            points = get_points(path_list)
-            print(points.list)
-
-            intents = {"intents": make_intent(points, h, links)}
-            points.list.reverse()
-            intents["intents"].extend(make_intent(points, h, links))
-
-            deleteIntents.clear()
-            post_intents(intents)
+    # while True:
+    #     src, dst, w = map(int, input("Input src, dst, w:\n").split())
+    #     if graph.set_new_weight(src, dst, w):
+    #         path_list = graph.dijkstra(start_node)
+    #         print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
+    #
+    #         points = get_points(path_list, host_pair)
+    #         print(points.list)
+    #
+    #         intents = {"intents": make_intent(points, h, links)}
+    #         points.list.reverse()
+    #         intents["intents"].extend(make_intent(points, h, links))
+    #
+    #         deleteIntents.clear()
+    #         post_intents(intents)
