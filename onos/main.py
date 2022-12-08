@@ -1,4 +1,5 @@
 import sys
+from copy import copy, deepcopy
 
 import requests
 import requests as req
@@ -10,8 +11,6 @@ import matrix
 
 
 def get_ip():
-    # with open("D:/Scripts/vmIP.txt", "r") as f:
-    #     ip = f.readline().strip()
     return "172.17.0.2"
 
 
@@ -45,26 +44,15 @@ class HostPair:
         return self.h2[1:]
 
 
-def get_points(path_list, host_pair):
-    points = Path()
-    for list in path_list:
-        nodes = list[1]
-        if nodes[-1].data[-1] == hex(int(host_pair.get_dst_host_num()))[2:]:
-            num_nodes = [int(_.data[-1], 16) for _ in nodes]
-            points.list = num_nodes
-            print()
-    return points
-
-
 def make_intent(points, hosts, links):
     intents = []
     dst = f"of:000000000000000{hex(points.list[len(points.list) - 1])[2:]}"
     src = f"of:000000000000000{hex(points.list[0])[2:]}"
-    print(dst, src)
-    ETH_DST = hosts[dst]["mac"]
-    print("ETH_DST ", ETH_DST)
+    print(f"{src} -> {dst}")
     ETH_SRC = hosts[src]["mac"]
     print("ETH_SRC ", ETH_SRC)
+    ETH_DST = hosts[dst]["mac"]
+    print("ETH_DST ", ETH_DST)
 
     for point in range(0, len(points.list)):
         portIn = ""
@@ -119,8 +107,21 @@ def make_intent(points, hosts, links):
                 else:
                     continue
         intents.append(intent)
+        reversed_intent = reverse_intent(intent)
+        intents.append(reversed_intent)
         continue
     return intents
+
+
+def reverse_intent(intent_old):
+    int_new = deepcopy(intent_old)
+    int_new["selector"]["criteria"][0]["mac"], int_new["treatment"]["instructions"][0]["mac"] = \
+        int_new["treatment"]["instructions"][0]["mac"], int_new["selector"]["criteria"][0]["mac"]
+    int_new["ingressPoint"]["port"], int_new["egressPoint"]["port"] = \
+        int_new["egressPoint"]["port"], int_new["ingressPoint"]["port"]
+    int_new["ingressPoint"]["device"], int_new["egressPoint"]["device"] = \
+        int_new["egressPoint"]["device"], int_new["ingressPoint"]["device"]
+    return int_new
 
 
 def post_intents(data):
@@ -128,7 +129,7 @@ def post_intents(data):
     successful_requests = 0
     for intent in data["intents"]:
         res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
-        if res.status_code == 200:
+        if res.status_code == 201:
             successful_requests += 1
     if successful_requests == intents_num:
         print(f"{successful_requests}/{intents_num} were successfully sent")
@@ -221,23 +222,25 @@ def get_src_dst_map():
     return src_dst_map
 
 
-def make_intents_for_pair(src, target: int):
+def go_dijkstra(start: int) -> list:
     graph.print_adj_mat()
-    start_node = graph.get_node_by_data(f"of:000000000000000{src}")
+    start_node = graph.get_node_by_data(f"of:000000000000000{start}")
     print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
     path_list = graph.dijkstra(start_node)
+    return path_list
 
-    hosts_list = get_hosts()
-    h = hosts(hosts_list)
 
-    host_pair = HostPair(f"h{src}", f"h{target}")
-    points = get_points(path_list, host_pair)
-    print(points.list)
-
-    res_intents = make_intent(points, h, links)
-    points.list.reverse()
-    res_intents.extend(make_intent(points, h, links))
-    return res_intents
+def get_routes_for_each_target(targets: list, paths: list) -> [list]:
+    routes = []
+    for path in paths:
+        points = Path()
+        nodes = path[1]
+        if nodes[-1].data[-1] in targets:
+            num_nodes = [int(_.data[-1], 16) for _ in nodes]
+            points.list = num_nodes
+            routes.append(points)
+            print("points", points.list)
+    return routes
 
 
 if __name__ == '__main__':
@@ -253,49 +256,29 @@ if __name__ == '__main__':
     graph = dijkstra.Graph.create_from_nodes(nodes)
 
     #################### No weights ######################
-    # Common adjacency matrix that tells us about the switches connections
+    # Common adjacency matrix that tells about the switches connections
     graph.adj_mat = matrix.get_matrix(links, len(devices))
     ##################### Weights ########################
     # graph.adj_mat = input_data.main()
 
-    # start_node_num = 5
-    #
-    # graph.print_adj_mat()
-    # start_node = graph.get_node_by_data(f"of:000000000000000{start_node_num}")
-    # print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
-    # path_list = graph.dijkstra(start_node)
-    #
-    # #####################################################################
-    #
-    # hosts_list = get_hosts()
-    # h = hosts(hosts_list)
-    #
-    # host_pair = HostPair(f"h{start_node_num}", "h6")
-    # points = get_points(path_list, host_pair)
-    # print(points.list)
-
-    # intents = {"intents": make_intent(points, h, links)}
-    # points.list.reverse()
-    # intents["intents"].extend(make_intent(points, h, links))
-    # data = intents
-    # print("\n")
-    # print(json.dumps(data, indent=4))
-
     pair_intents = []
     src_dst_map = get_src_dst_map()
-    for key in src_dst_map:
-        src = int(key)
-        for value in src_dst_map[key]:
-            target = int(value)
-            pair_intents.extend(make_intents_for_pair(src, target))
 
-    # pair_intents = make_intents_for_pair(5, 6)
+    hosts_list = get_hosts()
+    h = hosts(hosts_list)
+
+    for src in src_dst_map:
+        start_node = int(src)
+        targets = src_dst_map[src]
+        paths = go_dijkstra(start_node)
+        routes = get_routes_for_each_target(targets, paths)
+        for route in routes:
+            pair_intents.extend(make_intent(route, h, links))
 
     print("\n")
     print(json.dumps(pair_intents, indent=4))
 
-    # deleteIntents.clear()
-    #post_intents(intents)
+    deleteIntents.clear()
     intents = {"intents": pair_intents}
     post_intents(intents)
 
