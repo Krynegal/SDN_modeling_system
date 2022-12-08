@@ -1,5 +1,6 @@
 import sys
-from copy import copy, deepcopy
+from copy import deepcopy
+from itertools import combinations
 
 import requests
 import requests as req
@@ -195,6 +196,14 @@ def read_custom_traffic():
     return res
 
 
+def read_all_to_all(hosts: dict):
+    l = len(hosts)
+    d = {}
+    for i in range(1, l+1):
+        d[str(i)] = [str(j) for j in range(1, l+1) if j != i]
+    return d
+
+
 def get_receivers(traffic):
     receivers = []
     for t in traffic:
@@ -211,8 +220,8 @@ def get_senders(traffic):
     return list(set(senders))
 
 
-def get_src_dst_map():
-    traffic = read_custom_traffic()
+def get_src_dst_map(func):
+    traffic = func()
     src_dst_map = {}
     for pair in traffic[0][1]:
         if pair[0] not in src_dst_map:
@@ -224,6 +233,7 @@ def get_src_dst_map():
 
 def go_dijkstra(start: int) -> list:
     graph.print_adj_mat()
+    start = hex(start)[2:]
     start_node = graph.get_node_by_data(f"of:000000000000000{start}")
     print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
     path_list = graph.dijkstra(start_node)
@@ -244,6 +254,8 @@ def get_routes_for_each_target(targets: list, paths: list) -> [list]:
 
 
 if __name__ == '__main__':
+    type = input('Enter "c" for custom\nEnter "g" for all-to-all')
+
     IP = get_ip()
 
     links = get_links()
@@ -262,10 +274,15 @@ if __name__ == '__main__':
     # graph.adj_mat = input_data.main()
 
     pair_intents = []
-    src_dst_map = get_src_dst_map()
-
     hosts_list = get_hosts()
     h = hosts(hosts_list)
+
+    if type == 'c':
+        src_dst_map = get_src_dst_map(read_custom_traffic)
+    elif type == 'g':
+        src_dst_map = read_all_to_all(h)
+
+    #d = read_all_to_all(h)
 
     for src in src_dst_map:
         start_node = int(src)
