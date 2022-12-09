@@ -1,6 +1,5 @@
 import sys
 from copy import deepcopy
-from itertools import combinations
 
 import requests
 import requests as req
@@ -20,6 +19,7 @@ USER = ("onos", "rocks")
 
 def get_links():
     try:
+        IP = '172.17.0.2'
         res = req.get(f"http://{IP}:8181/onos/v1/links", auth=USER)
         links = res.json()["links"]
         with open("../jsonFiles/topology_links.json", "w") as f:
