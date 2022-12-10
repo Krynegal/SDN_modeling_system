@@ -9,10 +9,13 @@ from mininet.link import TCLink
 from mininet.node import RemoteController
 
 conf_path = os.getcwd()
+sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
 sys.path.append(conf_path)
+print(sys.path)
 from utils import host_addr_map, get_receivers, get_senders
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom
+from temp import fwd_activate
 
 net = Mininet()
 
@@ -21,7 +24,7 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/edges15.txt'
+topo_file = 'topologies/edges10.txt'
 topo_path = core_path + topo_file
 
 
@@ -45,6 +48,7 @@ class Graph():
 
 class MyTopo(Topo):
     def build(self):
+        fwd_activate(True)
         nodes = []
         with open(topo_path, "r") as f:
             for line in f.readlines():
@@ -89,6 +93,8 @@ net.build()
 net.start()
 time.sleep(5)
 net.pingAll()
+
+fwd_activate(False)
 
 host_addr_map = host_addr_map(topo)
 hosts = []
