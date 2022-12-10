@@ -1,3 +1,4 @@
+import os
 import time
 
 import temp
@@ -40,23 +41,21 @@ def run_all(hosts: []):
     # here we start doing requests to get stats
     links = temp.get_links()
     src_ports_map = temp.get_spm(links)
-    for i in range(30):
-        print(f"=======================   Прошло {int(i)*2} секунд  =============================")
+    for t in range(1, 31):
         matrix = temp.get_stats(src_ports_map)
-        # print("Передавалось (Mbit) в среднем по каждому каналу за 1 сек.)")
-        # for i in range(len(matrix)):
-        #     for j in range(len(matrix[i])):
-        #         print('%7.2f' % (matrix[i][j] / 60), end=', ')
-        #     print()
-        # print()
-
-        #print("ВОТ ЭТА ШТУКА")
-        for i in range(len(matrix)):
-            for j in range(len(matrix[i])):
-                print('%7.2f' % (1000 - (matrix[i][j] / 60)), end=', ')
-            print()
-        print()
-        time.sleep(10)
+        with open("/home/andre/PycharmProjects/onos_short_path/onos/residual.txt", "w") as f:
+            for i in range(len(matrix)):
+                for j in range(len(matrix[i])):
+                    f.write('%7.2f, ' % (1000 - (matrix[i][j])))
+                f.write('\n')
+        with open("/home/andre/PycharmProjects/onos_short_path/onos/residual_all.txt", "a") as f:
+            f.write(f"================================  {int(t)*2} seconds  ==================================\n")
+            for i in range(len(matrix)):
+                for j in range(len(matrix[i])):
+                    f.write('%7.2f, ' % (1000 - (matrix[i][j])))
+                f.write('\n')
+            f.write('\n\n')
+        time.sleep(2)
 
     #time.sleep(60)
     for i in range(1, len(hosts) + 1):

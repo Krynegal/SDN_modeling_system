@@ -15,6 +15,7 @@ print(sys.path)
 from utils import host_addr_map, get_receivers, get_senders
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom
+from temp import fwd_activate
 
 net = Mininet()
 
@@ -47,6 +48,7 @@ class Graph():
 
 class MyTopo(Topo):
     def build(self):
+        fwd_activate(True)
         nodes = []
         with open(topo_path, "r") as f:
             for line in f.readlines():
@@ -91,6 +93,8 @@ net.build()
 net.start()
 time.sleep(5)
 net.pingAll()
+
+fwd_activate(False)
 
 host_addr_map = host_addr_map(topo)
 hosts = []

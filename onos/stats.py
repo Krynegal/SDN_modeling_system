@@ -9,14 +9,15 @@ USER = ("onos", "rocks")
 
 def get_stats(spm: {}):
     devices_number = 10
-    matrix = [[0] * devices_number for _ in range(devices_number)]
+    matrix = [[0] * 10 for _ in range(10)]
     try:
         IP = main.get_ip()
         for device in spm:
             for port in spm[device]:
                 res = req.get(f"http://{IP}:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
                 bytes = res.json()["loads"][0]["latest"]
-                # "http://172.17.0.2:8181/onos/v1/links?device=of%3A0000000000000002&port=4"
+                if res.json()["loads"][0]["latest"] == -1:
+                    bytes = res.json()["loads"][1]["latest"]
                 second_device_link = res.json()["loads"][1]["link"]
                 all_instances = parse.urlparse(second_device_link)
                 dict_from_query = parse.parse_qs(all_instances.query)
@@ -27,6 +28,21 @@ def get_stats(spm: {}):
         print("Oops. Seems like dns lookup failed..")
         sys.exit()
 
+def get_start_matrix(spm):
+    matrix = [[0] * 10 for _ in range(10)]
+    for device in spm:
+        for port in spm[device]:
+            res = req.get(f"http://172.17.0.2:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
+            bytes = res.json()["loads"][0]["latest"]
+            second_device_link = res.json()["loads"][1]["link"]
+            all_instances = parse.urlparse(second_device_link)
+            dict_from_query = parse.parse_qs(all_instances.query)
+            second_device = dict_from_query['device'][0]
+            dev1 = int(device[-1], 16) - 1
+            dev2 = int(second_device[-1], 16) - 1
+            matrix[dev1][dev2] = round(bytes / 125_000, 2)
+            matrix[dev2][dev1] = matrix[dev1][dev2]
+    return matrix
 
 def update_matrix(matrix, dev1, dev2, bytes):
     dev1 = int(dev1[-1], 16) - 1
@@ -71,13 +87,21 @@ if __name__ == '__main__':
         print()
     print()
 
-    print("ВОТ ЭТА ШТУКА")
-    bw_matrix = [[1000] * len(matrix) for _ in range(len(matrix))]
-    for i in range(len(matrix)):
-        for j in range(len(matrix[i])):
-            print('%7.2f' % (1000 - (matrix[i][j] / 60)), end=', ')
-        print()
-    print()
+    # print("ВОТ ЭТА ШТУКА")
+    # bw_matrix = [[1000] * len(matrix) for _ in range(len(matrix))]
+    # for i in range(len(matrix)):
+    #     for j in range(len(matrix[i])):
+    #         print('%7.2f' % (1000 - (matrix[i][j] / 60)), end=', ')
+    #     print()
+    # print()
+
+    # with open("residual.txt", "a") as f:
+    #     for i in range(len(matrix)):
+    #         for j in range(len(matrix[i])):
+    #             f.write('%7.2f, ' % (1000 - (matrix[i][j] / 60)))
+    #         f.write('\n')
+    #     f.write('\n\n')
+    # print()
 
     print("Задействовано из полосы пропускания канала (1 Gbit) в %")
     for i in range(len(matrix)):

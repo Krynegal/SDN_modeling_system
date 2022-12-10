@@ -6,6 +6,16 @@ import json
 
 USER = ("onos", "rocks")
 
+def fwd_activate(activate: bool):
+    if activate:
+        res = req.post("http://172.17.0.2:8181/onos/v1/applications/org.onosproject.fwd/active", auth=USER)
+        if res.status_code == 200:
+            print('fwd is on')
+    else:
+        res = req.delete("http://172.17.0.2:8181/onos/v1/applications/org.onosproject.fwd/active", auth=USER)
+        if res.status_code == 204:
+            print('fwd is off')
+
 def get_links():
     try:
         IP = '172.17.0.2'
@@ -27,8 +37,7 @@ def get_stats(spm: {}):
         for device in spm:
             for port in spm[device]:
                 res = req.get(f"http://{IP}:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
-                bytes = res.json()["loads"][0]["latest"]
-                # "http://172.17.0.2:8181/onos/v1/links?device=of%3A0000000000000002&port=4"
+                bytes = res.json()["loads"][0]["rate"] + res.json()["loads"][1]["rate"]
                 second_device_link = res.json()["loads"][1]["link"]
                 all_instances = parse.urlparse(second_device_link)
                 dict_from_query = parse.parse_qs(all_instances.query)
