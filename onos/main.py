@@ -8,6 +8,7 @@ import json
 import deleteIntents
 import dijkstra
 import matrix
+import stats
 
 
 def get_ip():
@@ -295,22 +296,34 @@ if __name__ == '__main__':
     print("\n")
     print(json.dumps(pair_intents, indent=4))
 
-    deleteIntents.clear()
+    # deleteIntents.clear()
     intents = {"intents": pair_intents}
     post_intents(intents)
 
-    # while True:
-    #     src, dst, w = map(int, input("Input src, dst, w:\n").split())
-    #     if graph.set_new_weight(src, dst, w):
-    #         path_list = graph.dijkstra(start_node)
-    #         print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
-    #
-    #         points = get_points(path_list, host_pair)
-    #         print(points.list)
-    #
-    #         intents = {"intents": make_intent(points, h, links)}
-    #         points.list.reverse()
-    #         intents["intents"].extend(make_intent(points, h, links))
-    #
-    #         deleteIntents.clear()
-    #         post_intents(intents)
+    while True:
+        src, dst = map(int, input("Input src, dst:\n").split())
+        graph.adj_mat = stats.read_weights_matrix()
+        start_node = int(src)
+        paths = go_dijkstra(start_node)
+        targets = [str(dst)]
+        routes = get_routes_for_each_target(targets, paths)
+        pair_intents = []
+        for route in routes:
+            pair_intents.extend(make_intent(route, h, links))
+        print("\n")
+        print(json.dumps(pair_intents, indent=4))
+        intents = {"intents": pair_intents}
+        post_intents(intents)
+
+        # if graph.set_new_weight(src, dst):
+        #     path_list = graph.dijkstra(start_node)
+        #     print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
+        #
+        #     points = get_points(path_list, host_pair)
+        #     print(points.list)
+        #
+        #     intents = {"intents": make_intent(points, h, links)}
+        #     points.list.reverse()
+        #     intents["intents"].extend(make_intent(points, h, links))
+        #
+        #     post_intents(intents)

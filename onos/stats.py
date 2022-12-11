@@ -1,3 +1,5 @@
+import os
+
 import requests as req
 import sys
 import requests.exceptions
@@ -28,11 +30,13 @@ def get_stats(spm: {}):
         print("Oops. Seems like dns lookup failed..")
         sys.exit()
 
+
 def get_start_matrix(spm):
     matrix = [[0] * 10 for _ in range(10)]
     for device in spm:
         for port in spm[device]:
-            res = req.get(f"http://172.17.0.2:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
+            res = req.get(f"http://172.17.0.2:8181/onos/v1/statistics/flows/link?device={device}&port={port}",
+                          auth=USER)
             bytes = res.json()["loads"][0]["latest"]
             second_device_link = res.json()["loads"][1]["link"]
             all_instances = parse.urlparse(second_device_link)
@@ -44,11 +48,13 @@ def get_start_matrix(spm):
             matrix[dev2][dev1] = matrix[dev1][dev2]
     return matrix
 
+
 def update_matrix(matrix, dev1, dev2, bytes):
     dev1 = int(dev1[-1], 16) - 1
     dev2 = int(dev2[-1], 16) - 1
     matrix[dev1][dev2] = round(bytes / 125_000, 2)
     matrix[dev2][dev1] = matrix[dev1][dev2]
+
 
 def get_spm(links):
     src_ports_map = {}
@@ -64,55 +70,50 @@ def get_spm(links):
     return src_ports_map
 
 
+def read_weights_matrix():
+    os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt /home/andre/PycharmProjects/onos_short_path/onos/weights_copy.txt')
+    with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_copy.txt", "r") as f:
+        file = f.readlines()
+    weights_matrix = []
+    for line in file:
+        line = line.strip(', \n')
+        weights_matrix.append([float(x) for x in line.split(',')])
+    return weights_matrix
+
 if __name__ == '__main__':
-    global IP
-    links = main.get_links()
-    src_ports_map = get_spm(links)
-    matrix = get_stats(src_ports_map)
-
-    all_link_sum = 0
-    print("Передано (Mbit) по каждому каналу за все время моделирования (60 сек.)")
-    for i in range(len(matrix)):
-        for j in range(len(matrix[i])):
-            if i < j:
-                all_link_sum += matrix[i][j]
-            print('%7.2f' % matrix[i][j], end=', ')
-        print()
-    print()
-
-    print("Передавалось (Mbit) в среднем по каждому каналу за 1 сек.)")
-    for i in range(len(matrix)):
-        for j in range(len(matrix[i])):
-            print('%7.2f' % (matrix[i][j] / 60), end=', ')
-        print()
-    print()
-
-    # print("ВОТ ЭТА ШТУКА")
-    # bw_matrix = [[1000] * len(matrix) for _ in range(len(matrix))]
+    read_weights_matrix()
+    # global IP
+    # links = main.get_links()
+    # src_ports_map = get_spm(links)
+    # matrix = get_stats(src_ports_map)
+    #
+    # all_link_sum = 0
+    # print("Передано (Mbit) по каждому каналу за все время моделирования (60 сек.)")
     # for i in range(len(matrix)):
     #     for j in range(len(matrix[i])):
-    #         print('%7.2f' % (1000 - (matrix[i][j] / 60)), end=', ')
+    #         if i < j:
+    #             all_link_sum += matrix[i][j]
+    #         print('%7.2f' % matrix[i][j], end=', ')
     #     print()
     # print()
-
-    # with open("residual.txt", "a") as f:
-    #     for i in range(len(matrix)):
-    #         for j in range(len(matrix[i])):
-    #             f.write('%7.2f, ' % (1000 - (matrix[i][j] / 60)))
-    #         f.write('\n')
-    #     f.write('\n\n')
+    #
+    # print("Передавалось (Mbit) в среднем по каждому каналу за 1 сек.)")
+    # for i in range(len(matrix)):
+    #     for j in range(len(matrix[i])):
+    #         print('%7.2f' % (matrix[i][j] / 60), end=', ')
+    #     print()
     # print()
-
-    print("Задействовано из полосы пропускания канала (1 Gbit) в %")
-    for i in range(len(matrix)):
-        for j in range(len(matrix[i])):
-            print('%7.2f' % (matrix[i][j] / 60 * 100 / 1000), end=', ')
-        print()
-    print()
-    print("Свободно полосы пропускания канала (1 Gbit) в %")
-    for i in range(len(matrix)):
-        for j in range(len(matrix[i])):
-            print('%7.2f' % (100 - (matrix[i][j] / 60 * 100 / 1000)), end=', ')
-        print()
-
-    print(f'Передано всего за время моделирования: {all_link_sum} Mbit')
+    #
+    # print("Задействовано из полосы пропускания канала (1 Gbit) в %")
+    # for i in range(len(matrix)):
+    #     for j in range(len(matrix[i])):
+    #         print('%7.2f' % (matrix[i][j] / 60 * 100 / 1000), end=', ')
+    #     print()
+    # print()
+    # print("Свободно полосы пропускания канала (1 Gbit) в %")
+    # for i in range(len(matrix)):
+    #     for j in range(len(matrix[i])):
+    #         print('%7.2f' % (100 - (matrix[i][j] / 60 * 100 / 1000)), end=', ')
+    #     print()
+    #
+    # print(f'Передано всего за время моделирования: {all_link_sum} Mbit')

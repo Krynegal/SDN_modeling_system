@@ -24,6 +24,10 @@ def run_custom(hosts: [], senders: [], receivers: []):
     time.sleep(5)
     print('---end of processing---')
 
+def calc_new_weight(matrix_el):
+    if matrix_el == 0:
+        return 0
+    return 1000 / (1000 - matrix_el)
 
 def run_all(hosts: []):
     hosts_num = len(hosts)
@@ -38,21 +42,22 @@ def run_all(hosts: []):
     for i in range(1, hosts_num + 1):
         hosts[i - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} -l send_all_{i}.log &')
 
+    # os.system("rm /home/andre/PycharmProjects/onos_short_path/onos/residual_all.txt")
     # here we start doing requests to get stats
     links = temp.get_links()
     src_ports_map = temp.get_spm(links)
     for t in range(1, 31):
         matrix = temp.get_stats(src_ports_map)
-        with open("/home/andre/PycharmProjects/onos_short_path/onos/residual.txt", "w") as f:
+        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
             for i in range(len(matrix)):
                 for j in range(len(matrix[i])):
-                    f.write('%7.2f, ' % (1000 - (matrix[i][j])))
+                    f.write('%7.2f, ' % (calc_new_weight(matrix[i][j])))
                 f.write('\n')
-        with open("/home/andre/PycharmProjects/onos_short_path/onos/residual_all.txt", "a") as f:
+        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a") as f:
             f.write(f"================================  {int(t)*2} seconds  ==================================\n")
             for i in range(len(matrix)):
                 for j in range(len(matrix[i])):
-                    f.write('%7.2f, ' % (1000 - (matrix[i][j])))
+                    f.write('%7.2f, ' % (calc_new_weight(matrix[i][j])))
                 f.write('\n')
             f.write('\n\n')
         time.sleep(2)
