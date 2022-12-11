@@ -99,6 +99,8 @@ def make_intent(points, hosts, links):
                 elif (link["dst"]["device"] == f"of:000000000000000{hex(points.list[point - 1])[2:]}"
                       and points.list[point - 1] in points.list):
                     portIn = link["src"]["port"]
+                    if portIn == "":
+                        print(link["src"]["device"], link["dst"]["device"])
                     intent["ingressPoint"]["port"] = portIn
                 if point + 1 > len(points.list) - 1:
                     intent["egressPoint"]["port"] = "1"
@@ -133,6 +135,9 @@ def post_intents(data):
         res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
         if res.status_code == 201:
             successful_requests += 1
+        else:
+            print("NOT SUCCESSFUL")
+            print(intent)
     if successful_requests == intents_num:
         print(f"{successful_requests}/{intents_num} were successfully sent")
     else:
@@ -227,7 +232,7 @@ def get_src_dst_map(func):
     for pair in traffic[0][1]:
         if pair[0] not in src_dst_map:
             src_dst_map[pair[0]] = []
-        src_dst_map[pair[0]].extend(pair[1])
+        src_dst_map[pair[0]].append(pair[1])
     print(src_dst_map)
     return src_dst_map
 
@@ -246,7 +251,8 @@ def get_routes_for_each_target(targets: list, paths: list) -> [list]:
     for path in paths:
         points = Path()
         nodes = path[1]
-        if nodes[-1].data[-1] in targets:
+        # if nodes[-1].data[-1] in targets:
+        if str(int(nodes[-1].data[-1], 16)) in targets:
             num_nodes = [int(_.data[-1], 16) for _ in nodes]
             points.list = num_nodes
             routes.append(points)
@@ -284,7 +290,15 @@ if __name__ == '__main__':
         src_dst_map = read_all_to_all(h)
 
     #d = read_all_to_all(h)
-
+    # if True:
+    #     points = Path()
+    #     # points.list = [1, 2, 5, 8]
+    #     points.list = [1, 4, 6, 8]
+    #     routes = []
+    #     routes.append(points)
+    #     for route in routes:
+    #         pair_intents.extend(make_intent(route, h, links))
+    # else:
     for src in src_dst_map:
         start_node = int(src)
         targets = src_dst_map[src]
@@ -314,16 +328,3 @@ if __name__ == '__main__':
         print(json.dumps(pair_intents, indent=4))
         intents = {"intents": pair_intents}
         post_intents(intents)
-
-        # if graph.set_new_weight(src, dst):
-        #     path_list = graph.dijkstra(start_node)
-        #     print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
-        #
-        #     points = get_points(path_list, host_pair)
-        #     print(points.list)
-        #
-        #     intents = {"intents": make_intent(points, h, links)}
-        #     points.list.reverse()
-        #     intents["intents"].extend(make_intent(points, h, links))
-        #
-        #     post_intents(intents)

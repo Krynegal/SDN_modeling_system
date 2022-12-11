@@ -10,8 +10,10 @@ from mininet.node import RemoteController
 
 conf_path = os.getcwd()
 sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
+sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
+
 from utils import host_addr_map, get_receivers, get_senders
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom
