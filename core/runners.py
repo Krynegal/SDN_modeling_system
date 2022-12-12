@@ -11,8 +11,8 @@ scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 
 
-def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_receivers: [], start_time, duration):
-    time.sleep(start_time)
+def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_receivers: [], duration):
+    # time.sleep(start_time)
     print(f'receivers: {receivers}')
     print(f'ALL receivers: {all_receivers}')
     print(f'senders: {senders}')

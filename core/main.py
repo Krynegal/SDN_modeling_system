@@ -24,6 +24,7 @@ from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom, run_stats_processing
 from onos.main import get_intents_to_send, post_intents, get_src_dst_map, get_links, \
     get_dijkstra_graph, get_hosts, hosts_func, read_all_to_all
+from onos.stats import read_weights_matrix
 
 net = Mininet()
 
@@ -121,10 +122,31 @@ def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteDat.sh')
     os.system(f'cd {itg_path} && ./deleteTxt.sh')
 
-def get_yaml_content():
-    with open('/home/andre/PycharmProjects/onos_short_path/core/scenario.yaml') as f:
-        read_data = load(f, Loader=Loader)
-    return read_data
+
+# def get_yaml_content():
+#     with open('/home/andre/PycharmProjects/onos_short_path/core/scenario.yaml') as f:
+#         read_data = load(f, Loader=Loader)
+#     return read_data
+
+
+def get_src_dst_map_reachability_matrix(reachability_matrix, traffic):
+    pairs_only = traffic[0][1]
+    src_dst_map = {}
+    for pair in pairs_only:
+        src = int(pair[0]) - 1
+        dst = int(pair[1]) - 1
+        if reachability_matrix[src][dst] != 1:
+            if pair[0] not in src_dst_map:
+                src_dst_map[pair[0]] = []
+            src_dst_map[pair[0]].append(pair[1])
+            # обновляем матрицу достижимости
+            reachability_matrix[src][dst] = 1
+    print("Reachability matrix:\n")
+    for i in reachability_matrix:
+        for j in i:
+            print(j, end=' ')
+        print()
+    return src_dst_map
 
 
 while True:
@@ -143,30 +165,48 @@ while True:
         graph = get_dijkstra_graph(links)
         hosts_list = get_hosts()
         h = hosts_func(hosts_list)
-        traffic = read_custom_traffic(core_path + 'custom_traffic.txt')
-        src_dst_map = get_src_dst_map(traffic)
-        intents = get_intents_to_send(graph, h, links, src_dst_map)
-        post_intents(intents)
-        time.sleep(20)
+        # traffic = read_custom_traffic(core_path + 'custom_traffic.txt')
+        # на основании traffic - [['1', '2'], ..., ['2', '10']] - строится матрица достижимости
+        reachability_matrix = [[0] * 10 for x in range(10)]
+        # src_dst_map строится на основании матрицы достижимости, так как она по сути ей и является только в другой форме
+        # src_dst_map = get_src_dst_map_reachability_matrix(reachability_matrix, traffic)
+        # src_dst_map = get_src_dst_map(traffic)
+        # intents = get_intents_to_send(graph, h, links, src_dst_map)
+        # post_intents(intents)
+        # time.sleep(20)
 
         threads = []
         all_receivers = []
         mutex = threading.Lock()
         for action in read_data['scenario']:
-            custom_t_file_path = core_path + action['script']['name']
             start_time = action['script']['time']
+            time.sleep(start_time)
+            custom_t_file_path = core_path + action['script']['name']
             duration = action['script']['duration']
             id = action['script']['id']
 
             traffic = read_custom_traffic(custom_t_file_path)
+            # === принимаем решение о создании интента ===
+            # проверяем содержится ли пара src-dst из traffic в матрице достижимости
+            # если да, то НЕ кладем эту пару в src_dst_map
+            # если нет, то кладем эту пару в src_dst_map и обновляем матрицу достижимости
+            src_dst_map = get_src_dst_map_reachability_matrix(reachability_matrix, traffic)
+            if id != 1:
+                # обновляем матрицу графа дейкстры
+                graph.adj_mat = read_weights_matrix()
+            intents = get_intents_to_send(graph, h, links, src_dst_map)
+            post_intents(intents)
+            if id == 1:
+                time.sleep(20)
+
             receivers = get_receivers(traffic)
             senders = get_senders(traffic)
             generate_custom(id, host_addr_map, traffic, duration)
 
             scripts_path = core_path + f'actions/action{id}/'
-            thread = Thread(target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, start_time, duration,))
-            threads.append(thread)
-
+            thread = Thread(target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
+            # threads.append(thread)
+            thread.start()
 
         stat_thread = Thread(target=run_stats_processing, args=(links,))
         threads.append(stat_thread)
