@@ -11,19 +11,31 @@ scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 
 
-def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], start_time, duration):
+def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_receivers: [], start_time, duration):
     time.sleep(start_time)
     print(f'receivers: {receivers}')
+    print(f'ALL receivers: {all_receivers}')
     print(f'senders: {senders}')
     print('---start of processing---')
     print('processing...')
-    if '2' not in scripts_path:
-        for i in receivers:
+    # if '2' not in scripts_path:
+    #     for i in receivers:
+    #         hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
+    #
+    #     for i in receivers:
+    #         hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGRecv -l recv{i}.log &')
+    #     time.sleep(3)
+
+    for i in receivers:
+        if i not in all_receivers:
             hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
 
-        for i in receivers:
-            hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGRecv -l recv{i}.log &')
-        time.sleep(3)
+    for i in range(len(receivers)):
+        if receivers[i] not in all_receivers:
+            all_receivers.append(receivers[i])
+            hosts[int(receivers[i]) - 1].cmd(f'cd {itg_path} && ./ITGRecv -l recv{receivers[i]}.log &')
+        if i == len(receivers) - 1:
+            time.sleep(1)
 
     for i in senders:
         hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} -l send{i}.log &')

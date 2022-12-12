@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import os
 import sys
+import threading
 import time
 from threading import Thread
 
@@ -13,11 +14,11 @@ from mininet.node import RemoteController
 conf_path = os.getcwd()
 sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
 sys.path.append("/home/andre/pycharm-2022.1.3/plugins/python/helpers/typeshed/stubs/PyYAML/")
+sys.path.append("/home/andre/pycharm-2022.1.3/plugins/python/helpers/typeshed/stubs/PyYAML/yaml/")
 sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
 
-# from read_yml import get_yaml_content
 from utils import host_addr_map, get_receivers, get_senders, fwd_activate
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom, run_stats_processing
@@ -120,6 +121,11 @@ def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteDat.sh')
     os.system(f'cd {itg_path} && ./deleteTxt.sh')
 
+def get_yaml_content():
+    with open('/home/andre/PycharmProjects/onos_short_path/core/scenario.yaml') as f:
+        read_data = load(f, Loader=Loader)
+    return read_data
+
 
 while True:
     print('input "m" to run mininet console')
@@ -131,11 +137,6 @@ while True:
     elif input_line[0] == 'c':
         delete_old_files()
         os.system(f'rm -rf {core_path}actions/*')
-        # traffic = read_custom_traffic()
-        # receivers = get_receivers(traffic)
-        # senders = get_senders(traffic)
-        # generate_custom(host_addr_map, traffic)
-        # run_custom(hosts, senders, receivers)
         read_data = {'scenario': [{'script': {'id': 1, 'name': 'custom_traffic.txt', 'duration': 60, 'time': 0}}, {'script': {'id': 2, 'name': 'custom_traffic2.txt', 'duration': 30, 'time': 30}}]}
 
         links = get_links()
@@ -149,7 +150,8 @@ while True:
         time.sleep(20)
 
         threads = []
-
+        all_receivers = []
+        mutex = threading.Lock()
         for action in read_data['scenario']:
             custom_t_file_path = core_path + action['script']['name']
             start_time = action['script']['time']
@@ -160,11 +162,11 @@ while True:
             receivers = get_receivers(traffic)
             senders = get_senders(traffic)
             generate_custom(id, host_addr_map, traffic, duration)
-            #run_custom(hosts, senders, receivers)
 
             scripts_path = core_path + f'actions/action{id}/'
-            thread = Thread(target=run_custom, args=(scripts_path, hosts, senders, receivers, start_time, duration,))
+            thread = Thread(target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, start_time, duration,))
             threads.append(thread)
+
 
         stat_thread = Thread(target=run_stats_processing, args=(links,))
         threads.append(stat_thread)
