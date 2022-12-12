@@ -2,13 +2,14 @@ import os
 import random
 
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
+actions_path = core_path + 'actions/'
 scripts_path = core_path + 'scripts/'
 custom_t_file_path = core_path + 'custom_traffic.txt'
 
 
-def read_custom_traffic():
+def read_custom_traffic(file_path):
     res = []
-    with open(f"{custom_t_file_path}", "r") as f:
+    with open(f"{file_path}", "r") as f:
         for line in f.readlines():
             split_line = line.strip("\n").split(";")
             protocol = split_line[0]
@@ -18,18 +19,20 @@ def read_custom_traffic():
     return res
 
 
-def generate_custom(h_map, traffic):
-    os.system(f'cd {scripts_path} && rm script* -f')
+def generate_custom(id, h_map, traffic, duration):
+    # os.system(f'cd {scripts_path} && rm script* -f')
+    if not os.path.exists(f'{actions_path}action{id}'):
+        os.mkdir(f'{actions_path}action{id}')
     for t in traffic:
         for h in t[1]:
-            with open(f"{scripts_path}script{h[0]}", "a") as f:
+            with open(f"{actions_path}action{id}/script{h[0]}", "a") as f:
                 if t[0] in ["TCP", "UDP"]:
                     rec_port = random.randint(8999, 11000)
                     #-rp {rec_port}
-                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C 10000 -c 1000 -t 60000 -T {t[0]}\n")
+                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C 10000 -c 1000 -t {int(duration)*1000} -T {t[0]}\n")
                 else:
                     f.writelines(f"-a {h_map[h[1]]} {t[0]}\n")
-            os.chmod(rf"{scripts_path}script{h[0]}", 0o777)
+            os.chmod(rf"{actions_path}action{id}/script{h[0]}", 0o777)
 
 
 def generate_all_to_all(h_map, rate=1000, pkt_size=512, time=10, protocol='UDP'):

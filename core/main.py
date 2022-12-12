@@ -2,6 +2,8 @@
 import os
 import sys
 import time
+from threading import Thread
+
 from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.cli import CLI
@@ -10,13 +12,17 @@ from mininet.node import RemoteController
 
 conf_path = os.getcwd()
 sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
+sys.path.append("/home/andre/pycharm-2022.1.3/plugins/python/helpers/typeshed/stubs/PyYAML/")
 sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
 
+# from read_yml import get_yaml_content
 from utils import host_addr_map, get_receivers, get_senders, fwd_activate
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
-from runners import run_all, run_custom
+from runners import run_all, run_custom, run_stats_processing
+from onos.main import get_intents_to_send, post_intents, get_src_dst_map, get_links, \
+    get_dijkstra_graph, get_hosts, hosts_func, read_all_to_all
 
 net = Mininet()
 
@@ -124,11 +130,54 @@ while True:
         CLI(net)
     elif input_line[0] == 'c':
         delete_old_files()
-        traffic = read_custom_traffic()
-        receivers = get_receivers(traffic)
-        senders = get_senders(traffic)
-        generate_custom(host_addr_map, traffic)
-        run_custom(hosts, senders, receivers)
+        os.system(f'rm -rf {core_path}actions/*')
+        # traffic = read_custom_traffic()
+        # receivers = get_receivers(traffic)
+        # senders = get_senders(traffic)
+        # generate_custom(host_addr_map, traffic)
+        # run_custom(hosts, senders, receivers)
+        read_data = {'scenario': [{'script': {'id': 1, 'name': 'custom_traffic.txt', 'duration': 60, 'time': 0}}, {'script': {'id': 2, 'name': 'custom_traffic2.txt', 'duration': 30, 'time': 30}}]}
+
+        links = get_links()
+        graph = get_dijkstra_graph(links)
+        hosts_list = get_hosts()
+        h = hosts_func(hosts_list)
+        traffic = read_custom_traffic(core_path + 'custom_traffic.txt')
+        src_dst_map = get_src_dst_map(traffic)
+        intents = get_intents_to_send(graph, h, links, src_dst_map)
+        post_intents(intents)
+        time.sleep(20)
+
+        threads = []
+
+        for action in read_data['scenario']:
+            custom_t_file_path = core_path + action['script']['name']
+            start_time = action['script']['time']
+            duration = action['script']['duration']
+            id = action['script']['id']
+
+            traffic = read_custom_traffic(custom_t_file_path)
+            receivers = get_receivers(traffic)
+            senders = get_senders(traffic)
+            generate_custom(id, host_addr_map, traffic, duration)
+            #run_custom(hosts, senders, receivers)
+
+            scripts_path = core_path + f'actions/action{id}/'
+            thread = Thread(target=run_custom, args=(scripts_path, hosts, senders, receivers, start_time, duration,))
+            threads.append(thread)
+
+        stat_thread = Thread(target=run_stats_processing, args=(links,))
+        threads.append(stat_thread)
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            print(f"thread {thread} is STOPPED")
+            thread.join()
+
+        print("here")
+        for i in range(1, len(hosts) + 1):
+            hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
+
     elif input_line[0] == 'g':
         delete_old_files()
         if len(input_line) == 1:

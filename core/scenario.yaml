@@ -1,0 +1,7 @@
+scenario:
+  - script:
+      name: custom_traffic.txt
+      time: 0
+  - script:
+      name: custom_traffic2.txt
+      time: 30

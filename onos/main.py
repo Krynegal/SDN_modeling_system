@@ -226,8 +226,7 @@ def get_senders(traffic):
     return list(set(senders))
 
 
-def get_src_dst_map(func):
-    traffic = func()
+def get_src_dst_map(traffic):
     src_dst_map = {}
     for pair in traffic[0][1]:
         if pair[0] not in src_dst_map:
