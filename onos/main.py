@@ -132,16 +132,16 @@ def post_intents(data):
     intents_num = len(data["intents"])
     successful_requests = 0
     for intent in data["intents"]:
-        res = req.post(f"http://{IP}:8181/onos/v1/intents", json=intent, auth=USER)
+        res = req.post(f"http://172.17.0.2:8181/onos/v1/intents", json=intent, auth=USER)
         if res.status_code == 201:
             successful_requests += 1
         else:
-            print("NOT SUCCESSFUL")
+            print("NOT SUCCESSFUL REQUEST")
             print(intent)
-    if successful_requests == intents_num:
-        print(f"{successful_requests}/{intents_num} were successfully sent")
-    else:
+    if successful_requests != intents_num:
         print(f"Oops. Only {successful_requests}/{intents_num} were successfully sent")
+        return
+    print(f"{successful_requests}/{intents_num} were successfully send")
 
 
 def post_flows(data):
@@ -181,7 +181,7 @@ def get_hosts():
         sys.exit()
 
 
-def hosts(hosts):
+def hosts_func(hosts):
     h = {}
     for host in hosts:
         h[host["locations"][0]["elementId"]] = {"mac": host["mac"], "ip": host["ipAddresses"][0]}
@@ -205,8 +205,8 @@ def read_custom_traffic():
 def read_all_to_all(hosts: dict):
     l = len(hosts)
     d = {}
-    for i in range(1, l+1):
-        d[str(i)] = [str(j) for j in range(1, l+1) if j != i]
+    for i in range(1, l + 1):
+        d[str(i)] = [str(j) for j in range(1, l + 1) if j != i]
     return d
 
 
@@ -233,11 +233,10 @@ def get_src_dst_map(func):
         if pair[0] not in src_dst_map:
             src_dst_map[pair[0]] = []
         src_dst_map[pair[0]].append(pair[1])
-    print(src_dst_map)
     return src_dst_map
 
 
-def go_dijkstra(start: int) -> list:
+def go_dijkstra(graph: dijkstra.Graph, start: int) -> list:
     graph.print_adj_mat()
     start = hex(start)[2:]
     start_node = graph.get_node_by_data(f"of:000000000000000{start}")
@@ -251,13 +250,37 @@ def get_routes_for_each_target(targets: list, paths: list) -> [list]:
     for path in paths:
         points = Path()
         nodes = path[1]
-        # if nodes[-1].data[-1] in targets:
         if str(int(nodes[-1].data[-1], 16)) in targets:
             num_nodes = [int(_.data[-1], 16) for _ in nodes]
             points.list = num_nodes
             routes.append(points)
             print("points", points.list)
     return routes
+
+
+def get_intents_to_send(graph: dijkstra.Graph, h, links, src_dst_map: {}) -> dict:
+    pair_intents = []
+    for src in src_dst_map:
+        start_node = int(src)
+        targets = src_dst_map[src]
+        paths = go_dijkstra(graph, start_node)
+        routes = get_routes_for_each_target(targets, paths)
+        for route in routes:
+            pair_intents.extend(make_intent(route, h, links))
+    print("\n")
+    print(json.dumps(pair_intents, indent=4))
+    # deleteIntents.clear()
+    intents = {"intents": pair_intents}
+    return intents
+
+
+def get_dijkstra_graph(links) -> dijkstra.Graph:
+    devices = get_devices_list(links)
+    nodes = get_nodes(devices)
+    print(nodes)
+    graph = dijkstra.Graph.create_from_nodes(nodes)
+    graph.adj_mat = matrix.get_matrix(links, len(devices))
+    return graph
 
 
 if __name__ == '__main__':
@@ -282,14 +305,14 @@ if __name__ == '__main__':
 
     pair_intents = []
     hosts_list = get_hosts()
-    h = hosts(hosts_list)
+    h = hosts_func(hosts_list)
 
     if type == 'c':
         src_dst_map = get_src_dst_map(read_custom_traffic)
     elif type == 'g':
         src_dst_map = read_all_to_all(h)
 
-    #d = read_all_to_all(h)
+    # d = read_all_to_all(h)
     # if True:
     #     points = Path()
     #     # points.list = [1, 2, 5, 8]
@@ -299,26 +322,14 @@ if __name__ == '__main__':
     #     for route in routes:
     #         pair_intents.extend(make_intent(route, h, links))
     # else:
-    for src in src_dst_map:
-        start_node = int(src)
-        targets = src_dst_map[src]
-        paths = go_dijkstra(start_node)
-        routes = get_routes_for_each_target(targets, paths)
-        for route in routes:
-            pair_intents.extend(make_intent(route, h, links))
-
-    print("\n")
-    print(json.dumps(pair_intents, indent=4))
-
-    # deleteIntents.clear()
-    intents = {"intents": pair_intents}
+    intents = get_intents_to_send(graph, h, links, src_dst_map)
     post_intents(intents)
 
     while True:
         src, dst = map(int, input("Input src, dst:\n").split())
         graph.adj_mat = stats.read_weights_matrix()
         start_node = int(src)
-        paths = go_dijkstra(start_node)
+        paths = go_dijkstra(graph, start_node)
         targets = [str(dst)]
         routes = get_routes_for_each_target(targets, paths)
         pair_intents = []
