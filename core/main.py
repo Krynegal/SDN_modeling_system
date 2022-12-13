@@ -191,27 +191,32 @@ while True:
             # если да, то НЕ кладем эту пару в src_dst_map
             # если нет, то кладем эту пару в src_dst_map и обновляем матрицу достижимости
             src_dst_map = get_src_dst_map_reachability_matrix(reachability_matrix, traffic)
-            if id != 1:
-                # обновляем матрицу графа дейкстры
-                graph.adj_mat = read_weights_matrix()
-            intents = get_intents_to_send(graph, h, links, src_dst_map)
-            post_intents(intents)
+            if len(src_dst_map) != 0:
+                if id != 1:
+                    # обновляем матрицу графа дейкстры
+                    graph.adj_mat = read_weights_matrix()
+                intents = get_intents_to_send(graph, h, links, src_dst_map)
+                post_intents(intents)
+            else:
+                print("src_dst_map is empty. There are no new intents")
             if id == 1:
                 time.sleep(20)
+                stat_thread = Thread(name="stats thread", target=run_stats_processing, args=(links,))
+                stat_thread.start()
+                threads.append(stat_thread)
 
             receivers = get_receivers(traffic)
             senders = get_senders(traffic)
             generate_custom(id, host_addr_map, traffic, duration)
 
             scripts_path = core_path + f'actions/action{id}/'
-            thread = Thread(target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
-            # threads.append(thread)
+            name = "first thread"
+            if id != 1:
+                name = "second thread"
+            thread = Thread(name=name, target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
             thread.start()
+            threads.append(thread)
 
-        stat_thread = Thread(target=run_stats_processing, args=(links,))
-        threads.append(stat_thread)
-        for thread in threads:
-            thread.start()
         for thread in threads:
             print(f"thread {thread} is STOPPED")
             thread.join()

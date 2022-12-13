@@ -2,12 +2,12 @@
     "links": [
         {
             "src": {
-                "port": "3",
-                "device": "of:0000000000000001"
+                "port": "5",
+                "device": "of:0000000000000007"
             },
             "dst": {
-                "port": "2",
-                "device": "of:0000000000000003"
+                "port": "4",
+                "device": "of:0000000000000009"
             },
             "type": "DIRECT",
             "state": "ACTIVE"
@@ -26,12 +26,12 @@
         },
         {
             "src": {
-                "port": "5",
-                "device": "of:0000000000000007"
+                "port": "3",
+                "device": "of:0000000000000001"
             },
             "dst": {
-                "port": "4",
-                "device": "of:0000000000000009"
+                "port": "2",
+                "device": "of:0000000000000003"
             },
             "type": "DIRECT",
             "state": "ACTIVE"
@@ -56,6 +56,18 @@
             "dst": {
                 "port": "2",
                 "device": "of:0000000000000008"
+            },
+            "type": "DIRECT",
+            "state": "ACTIVE"
+        },
+        {
+            "src": {
+                "port": "4",
+                "device": "of:0000000000000003"
+            },
+            "dst": {
+                "port": "2",
+                "device": "of:0000000000000006"
             },
             "type": "DIRECT",
             "state": "ACTIVE"
@@ -80,18 +92,6 @@
             "dst": {
                 "port": "2",
                 "device": "of:0000000000000004"
-            },
-            "type": "DIRECT",
-            "state": "ACTIVE"
-        },
-        {
-            "src": {
-                "port": "4",
-                "device": "of:0000000000000003"
-            },
-            "dst": {
-                "port": "2",
-                "device": "of:0000000000000006"
             },
             "type": "DIRECT",
             "state": "ACTIVE"
@@ -194,12 +194,12 @@
         },
         {
             "src": {
-                "port": "2",
-                "device": "of:0000000000000006"
+                "port": "3",
+                "device": "of:0000000000000009"
             },
             "dst": {
-                "port": "4",
-                "device": "of:0000000000000003"
+                "port": "5",
+                "device": "of:0000000000000006"
             },
             "type": "DIRECT",
             "state": "ACTIVE"
@@ -218,24 +218,12 @@
         },
         {
             "src": {
-                "port": "3",
-                "device": "of:0000000000000009"
-            },
-            "dst": {
-                "port": "5",
+                "port": "2",
                 "device": "of:0000000000000006"
             },
-            "type": "DIRECT",
-            "state": "ACTIVE"
-        },
-        {
-            "src": {
-                "port": "4",
-                "device": "of:0000000000000009"
-            },
             "dst": {
-                "port": "5",
-                "device": "of:0000000000000007"
+                "port": "4",
+                "device": "of:0000000000000003"
             },
             "type": "DIRECT",
             "state": "ACTIVE"
@@ -260,6 +248,18 @@
             "dst": {
                 "port": "3",
                 "device": "of:0000000000000001"
+            },
+            "type": "DIRECT",
+            "state": "ACTIVE"
+        },
+        {
+            "src": {
+                "port": "4",
+                "device": "of:0000000000000009"
+            },
+            "dst": {
+                "port": "5",
+                "device": "of:0000000000000007"
             },
             "type": "DIRECT",
             "state": "ACTIVE"
