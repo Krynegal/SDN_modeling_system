@@ -13,12 +13,18 @@ from mininet.node import RemoteController
 
 conf_path = os.getcwd()
 sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
-sys.path.append("/home/andre/pycharm-2022.1.3/plugins/python/helpers/typeshed/stubs/PyYAML/")
-sys.path.append("/home/andre/pycharm-2022.1.3/plugins/python/helpers/typeshed/stubs/PyYAML/yaml/")
+sys.path.append("/usr/lib64/python310.zip")
+sys.path.append("/usr/lib64/python3.10")
+sys.path.append("/usr/lib64/python3.10/lib-dynload")
+sys.path.append("/home/andre/.local/lib/python3.10/site-packages")
+sys.path.append("/usr/local/lib64/python3.10/site-packages")
+sys.path.append("/usr/lib64/python3.10/site-packages")
+sys.path.append("/usr/lib/python3.10/site-packages")
 sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
 
+from core.read_scenario import get_yaml_content
 from utils import host_addr_map, get_receivers, get_senders, fwd_activate
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom, run_stats_processing
@@ -33,7 +39,7 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/edges10.txt'
+topo_file = 'topologies/edges15.txt'
 topo_path = core_path + topo_file
 
 
@@ -109,6 +115,7 @@ host_addr_map = host_addr_map(topo)
 hosts = []
 for h_key in host_addr_map.keys():
     hosts.append(net.get(f'h{h_key}'))
+devices_num = len(hosts)
 # print(hosts)
 
 
@@ -159,21 +166,15 @@ while True:
     elif input_line[0] == 'c':
         delete_old_files()
         os.system(f'rm -rf {core_path}actions/*')
-        read_data = {'scenario': [{'script': {'id': 1, 'name': 'custom_traffic.txt', 'duration': 60, 'time': 0}}, {'script': {'id': 2, 'name': 'custom_traffic2.txt', 'duration': 30, 'time': 30}}]}
+        read_data = get_yaml_content()
 
         links = get_links()
         graph = get_dijkstra_graph(links)
         hosts_list = get_hosts()
         h = hosts_func(hosts_list)
-        # traffic = read_custom_traffic(core_path + 'custom_traffic.txt')
         # на основании traffic - [['1', '2'], ..., ['2', '10']] - строится матрица достижимости
-        reachability_matrix = [[0] * 10 for x in range(10)]
+        reachability_matrix = [[0] * devices_num for x in range(devices_num)]
         # src_dst_map строится на основании матрицы достижимости, так как она по сути ей и является только в другой форме
-        # src_dst_map = get_src_dst_map_reachability_matrix(reachability_matrix, traffic)
-        # src_dst_map = get_src_dst_map(traffic)
-        # intents = get_intents_to_send(graph, h, links, src_dst_map)
-        # post_intents(intents)
-        # time.sleep(20)
 
         threads = []
         all_receivers = []
@@ -192,6 +193,7 @@ while True:
             # если нет, то кладем эту пару в src_dst_map и обновляем матрицу достижимости
             src_dst_map = get_src_dst_map_reachability_matrix(reachability_matrix, traffic)
             if len(src_dst_map) != 0:
+                print(f'src_dst_map: {src_dst_map}')
                 if id != 1:
                     # обновляем матрицу графа дейкстры
                     graph.adj_mat = read_weights_matrix()
@@ -201,7 +203,7 @@ while True:
                 print("src_dst_map is empty. There are no new intents")
             if id == 1:
                 time.sleep(20)
-                stat_thread = Thread(name="stats thread", target=run_stats_processing, args=(links,))
+                stat_thread = Thread(name="stats thread", target=run_stats_processing, args=(links, devices_num,))
                 stat_thread.start()
                 threads.append(stat_thread)
 
@@ -210,9 +212,7 @@ while True:
             generate_custom(id, host_addr_map, traffic, duration)
 
             scripts_path = core_path + f'actions/action{id}/'
-            name = "first thread"
-            if id != 1:
-                name = "second thread"
+            name = str(id)
             thread = Thread(name=name, target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
             thread.start()
             threads.append(thread)

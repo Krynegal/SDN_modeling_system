@@ -142,6 +142,8 @@ class Graph:
                     min_node = n
 
             # Добавляет мин. расстояние узла до увиденного, убирает очередь
+            print(f'queue: {queue}')
+            print(f'min_node: {min_node}')
             queue.remove(min_node)
             seen.add(min_node)
             # Получает все следующие перескоки

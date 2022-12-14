@@ -1,6 +1,4 @@
 import time
-# import temp
-from threading import Thread
 
 from onos.main import get_intents_to_send, post_intents, get_src_dst_map, read_custom_traffic, get_links, \
     get_dijkstra_graph, get_hosts, hosts_func, read_all_to_all
@@ -12,19 +10,11 @@ itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023
 
 
 def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_receivers: [], duration):
-    # time.sleep(start_time)
     print(f'receivers: {receivers}')
     print(f'ALL receivers: {all_receivers}')
     print(f'senders: {senders}')
     print('---start of processing---')
     print('processing...')
-    # if '2' not in scripts_path:
-    #     for i in receivers:
-    #         hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
-    #
-    #     for i in receivers:
-    #         hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGRecv -l recv{i}.log &')
-    #     time.sleep(3)
 
     for i in receivers:
         if i not in all_receivers:
@@ -41,11 +31,12 @@ def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_rec
         hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} -l send{i}.log &')
     time.sleep(duration)
 
-def run_stats_processing(links):
+
+def run_stats_processing(links, num_devices: int):
     src_ports_map = get_spm(links)
     for t in range(1, 31):
         time.sleep(2)
-        matrix = get_stats(src_ports_map)
+        matrix = get_stats(src_ports_map, num_devices)
         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
             for i in range(len(matrix)):
                 for j in range(len(matrix[i])):
@@ -61,7 +52,7 @@ def run_stats_processing(links):
 
 
 def calc_new_weight(matrix_el):
-    if matrix_el == 0:
+    if matrix_el == -1:
         return 0
     return 1000 / (1000 - matrix_el)
 
@@ -91,7 +82,7 @@ def run_all(hosts: []):
 
     src_ports_map = get_spm(links)
     for t in range(1, 31):
-        matrix = get_stats(src_ports_map)
+        matrix = get_stats(src_ports_map, len(h))
         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
             for i in range(len(matrix)):
                 for j in range(len(matrix[i])):
