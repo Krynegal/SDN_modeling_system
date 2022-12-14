@@ -5,7 +5,6 @@ import requests
 import requests as req
 import json
 
-import deleteIntents
 import dijkstra
 import matrix
 import stats
@@ -226,8 +225,7 @@ def get_senders(traffic):
     return list(set(senders))
 
 
-def get_src_dst_map(func):
-    traffic = func()
+def get_src_dst_map(traffic):
     src_dst_map = {}
     for pair in traffic[0][1]:
         if pair[0] not in src_dst_map:
@@ -239,7 +237,9 @@ def get_src_dst_map(func):
 def go_dijkstra(graph: dijkstra.Graph, start: int) -> list:
     graph.print_adj_mat()
     start = hex(start)[2:]
+    print(f'start: {start}')
     start_node = graph.get_node_by_data(f"of:000000000000000{start}")
+    print(f'start_node: {start_node}')
     print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
     path_list = graph.dijkstra(start_node)
     return path_list

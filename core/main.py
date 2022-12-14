@@ -1,7 +1,10 @@
 #!/usr/bin/python
 import os
 import sys
+import threading
 import time
+from threading import Thread
+
 from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.cli import CLI
@@ -10,13 +13,24 @@ from mininet.node import RemoteController
 
 conf_path = os.getcwd()
 sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
+sys.path.append("/usr/lib64/python310.zip")
+sys.path.append("/usr/lib64/python3.10")
+sys.path.append("/usr/lib64/python3.10/lib-dynload")
+sys.path.append("/home/andre/.local/lib/python3.10/site-packages")
+sys.path.append("/usr/local/lib64/python3.10/site-packages")
+sys.path.append("/usr/lib64/python3.10/site-packages")
+sys.path.append("/usr/lib/python3.10/site-packages")
 sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
 
+from core.read_scenario import get_yaml_content
 from utils import host_addr_map, get_receivers, get_senders, fwd_activate
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
-from runners import run_all, run_custom
+from runners import run_all, run_custom, run_stats_processing
+from onos.main import get_intents_to_send, post_intents, get_src_dst_map, get_links, \
+    get_dijkstra_graph, get_hosts, hosts_func, read_all_to_all
+from onos.stats import read_weights_matrix
 
 net = Mininet()
 
@@ -25,7 +39,7 @@ c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/edges10.txt'
+topo_file = 'topologies/edges15.txt'
 topo_path = core_path + topo_file
 
 
@@ -101,6 +115,7 @@ host_addr_map = host_addr_map(topo)
 hosts = []
 for h_key in host_addr_map.keys():
     hosts.append(net.get(f'h{h_key}'))
+devices_num = len(hosts)
 # print(hosts)
 
 
@@ -115,6 +130,32 @@ def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteTxt.sh')
 
 
+# def get_yaml_content():
+#     with open('/home/andre/PycharmProjects/onos_short_path/core/scenario.yaml') as f:
+#         read_data = load(f, Loader=Loader)
+#     return read_data
+
+
+def get_src_dst_map_reachability_matrix(reachability_matrix, traffic):
+    pairs_only = traffic[0][1]
+    src_dst_map = {}
+    for pair in pairs_only:
+        src = int(pair[0]) - 1
+        dst = int(pair[1]) - 1
+        if reachability_matrix[src][dst] != 1:
+            if pair[0] not in src_dst_map:
+                src_dst_map[pair[0]] = []
+            src_dst_map[pair[0]].append(pair[1])
+            # обновляем матрицу достижимости
+            reachability_matrix[src][dst] = 1
+    print("Reachability matrix:\n")
+    for i in reachability_matrix:
+        for j in i:
+            print(j, end=' ')
+        print()
+    return src_dst_map
+
+
 while True:
     print('input "m" to run mininet console')
     print('input "c" to run custom')
@@ -124,11 +165,66 @@ while True:
         CLI(net)
     elif input_line[0] == 'c':
         delete_old_files()
-        traffic = read_custom_traffic()
-        receivers = get_receivers(traffic)
-        senders = get_senders(traffic)
-        generate_custom(host_addr_map, traffic)
-        run_custom(hosts, senders, receivers)
+        os.system(f'rm -rf {core_path}actions/*')
+        read_data = get_yaml_content()
+
+        links = get_links()
+        graph = get_dijkstra_graph(links)
+        hosts_list = get_hosts()
+        h = hosts_func(hosts_list)
+        # на основании traffic - [['1', '2'], ..., ['2', '10']] - строится матрица достижимости
+        reachability_matrix = [[0] * devices_num for x in range(devices_num)]
+        # src_dst_map строится на основании матрицы достижимости, так как она по сути ей и является только в другой форме
+
+        threads = []
+        all_receivers = []
+        mutex = threading.Lock()
+        for action in read_data['scenario']:
+            start_time = action['script']['time']
+            time.sleep(start_time)
+            custom_t_file_path = core_path + action['script']['name']
+            duration = action['script']['duration']
+            id = action['script']['id']
+
+            traffic = read_custom_traffic(custom_t_file_path)
+            # === принимаем решение о создании интента ===
+            # проверяем содержится ли пара src-dst из traffic в матрице достижимости
+            # если да, то НЕ кладем эту пару в src_dst_map
+            # если нет, то кладем эту пару в src_dst_map и обновляем матрицу достижимости
+            src_dst_map = get_src_dst_map_reachability_matrix(reachability_matrix, traffic)
+            if len(src_dst_map) != 0:
+                print(f'src_dst_map: {src_dst_map}')
+                if id != 1:
+                    # обновляем матрицу графа дейкстры
+                    graph.adj_mat = read_weights_matrix()
+                intents = get_intents_to_send(graph, h, links, src_dst_map)
+                post_intents(intents)
+            else:
+                print("src_dst_map is empty. There are no new intents")
+            if id == 1:
+                time.sleep(20)
+                stat_thread = Thread(name="stats thread", target=run_stats_processing, args=(links, devices_num,))
+                stat_thread.start()
+                threads.append(stat_thread)
+
+            receivers = get_receivers(traffic)
+            senders = get_senders(traffic)
+            generate_custom(id, host_addr_map, traffic, duration)
+
+            scripts_path = core_path + f'actions/action{id}/'
+            name = str(id)
+            thread = Thread(name=name, target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
+            thread.start()
+            threads.append(thread)
+
+        for thread in threads:
+            print(f"thread {thread} is STOPPED")
+            thread.join()
+
+        print("here")
+        for i in range(1, len(hosts) + 1):
+            hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
+
     elif input_line[0] == 'g':
         delete_old_files()
         if len(input_line) == 1:

@@ -9,20 +9,27 @@ from urllib import parse
 USER = ("onos", "rocks")
 
 
-def get_stats(spm: {}):
-    devices_number = 10
-    matrix = [[0] * devices_number for _ in range(devices_number)]
+def get_stats(spm: {}, devices_number: int):
+    matrix = [[-1] * devices_number for _ in range(devices_number)]
     try:
         IP = '172.17.0.2'
         for device in spm:
             for port in spm[device]:
                 res = req.get(f"http://{IP}:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
-                bytes = res.json()["loads"][0]["rate"] + res.json()["loads"][1]["rate"]
-                second_device_link = res.json()["loads"][1]["link"]
-                all_instances = parse.urlparse(second_device_link)
-                dict_from_query = parse.parse_qs(all_instances.query)
-                second_device = dict_from_query['device'][0]
-                update_matrix(matrix, device, second_device, bytes)
+                # print(device, port)
+                bytes = 0
+                if len(res.json()["loads"]) > 0:
+                    bytes += res.json()["loads"][0]["rate"]
+                else:
+                    print(res.json()["loads"])
+                if len(res.json()["loads"]) > 1:
+                    bytes += res.json()["loads"][1]["rate"]
+
+                    second_device_link = res.json()["loads"][1]["link"]
+                    all_instances = parse.urlparse(second_device_link)
+                    dict_from_query = parse.parse_qs(all_instances.query)
+                    second_device = dict_from_query['device'][0]
+                    update_matrix(matrix, device, second_device, bytes)
         return matrix
     except req.exceptions.ConnectionError:
         print("Oops. Seems like dns lookup failed..")
@@ -51,8 +58,9 @@ def get_spm(links):
 
 
 def read_weights_matrix():
-    os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt /home/andre/PycharmProjects/onos_short_path/onos/weights_copy.txt')
-    with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_copy.txt", "r") as f:
+    os.system(
+        'cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt /home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt')
+    with open("/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt", "r") as f:
         file = f.readlines()
     weights_matrix = []
     for line in file:
@@ -61,6 +69,7 @@ def read_weights_matrix():
     return weights_matrix
 
 
+# not used
 def get_stats_old(spm: {}):
     devices_number = 10
     matrix = [[0] * 10 for _ in range(10)]
@@ -83,6 +92,7 @@ def get_stats_old(spm: {}):
         sys.exit()
 
 
+# not used
 def get_start_matrix(spm):
     matrix = [[0] * 10 for _ in range(10)]
     for device in spm:
@@ -102,7 +112,7 @@ def get_start_matrix(spm):
 
 
 if __name__ == '__main__':
-    read_weights_matrix()
+    #read_weights_matrix()
     # global IP
     # links = main.get_links()
     # src_ports_map = get_spm(links)
@@ -138,3 +148,4 @@ if __name__ == '__main__':
     #     print()
     #
     # print(f'Передано всего за время моделирования: {all_link_sum} Mbit')
+    print(hex(10)[2:])
