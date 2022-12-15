@@ -30,7 +30,7 @@ from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom, run_stats_processing
 from onos.main import get_intents_to_send, post_intents, get_src_dst_map, get_links, \
     get_dijkstra_graph, get_hosts, hosts_func, read_all_to_all, get_host_switch_map, get_switch_start_pairs, \
-    get_src_dst_switch_map_reachability_matrix
+    get_src_dst_switch_map_reachability_matrix, remove_duplicates
 from onos.stats import read_weights_matrix
 
 net = Mininet()
@@ -162,6 +162,7 @@ while True:
         mutex = threading.Lock()
         for action in read_data['scenario']:
             start_time = action['script']['time']
+            print(f"{action['script']['id']} in cycle! sleep {start_time} seconds")
             time.sleep(start_time)
             custom_t_file_path = core_path + action['script']['name']
             duration = action['script']['duration']
@@ -173,7 +174,8 @@ while True:
             # проверяем содержится ли пара src-dst из traffic в матрице достижимости
             # если да, то НЕ кладем эту пару в src_dst_map
             # если нет, то кладем эту пару в src_dst_map и обновляем матрицу достижимости
-            switch_start_pairs = get_switch_start_pairs(traffic)
+            host_pairs_only = remove_duplicates(traffic[0][1])
+            switch_start_pairs = get_switch_start_pairs(host_pairs_only)
             print(switch_start_pairs)
             src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic)
             if len(src_dst_switch_map) != 0:
@@ -199,6 +201,7 @@ while True:
             name = str(id)
             thread = Thread(name=name, target=run_custom, args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
             thread.start()
+            print(f'thread: {thread.name} is started')
             threads.append(thread)
 
         for thread in threads:

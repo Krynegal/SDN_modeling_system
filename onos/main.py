@@ -388,9 +388,9 @@ def get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic):
     return src_dst_switch_map
 
 
-def get_switch_start_pairs(traffic):
+def get_switch_start_pairs(host_pairs):
     switch_start_pairs = {}
-    for pair in traffic[0][1]:
+    for pair in host_pairs:
         src_host = int(pair[0])
         start_switch = int(src_host / 2)
         if src_host % 2 != 0:
@@ -399,6 +399,27 @@ def get_switch_start_pairs(traffic):
             switch_start_pairs[start_switch] = []
         switch_start_pairs[start_switch].append(pair)
     return switch_start_pairs
+
+
+def get_src_dsts_host_map(traffic):
+    m = {}
+    for pair in traffic:
+        src, dst = pair[0], pair[1]
+        if src not in m:
+            m[src] = []
+        if dst in m and src in m[dst]:
+            continue
+        m[src].append(dst)
+    return m
+
+
+def remove_duplicates(all_traffic):
+    without_dup = get_src_dsts_host_map(all_traffic)
+    res = []
+    for key in without_dup:
+        for dst in without_dup[key]:
+            res.append([key, dst])
+    return res
 
 
 if __name__ == '__main__':
@@ -455,14 +476,16 @@ if __name__ == '__main__':
                         ['9', '2'], ['9', '4'], ['9', '6'], ['9', '8'], ['9', '10'], ['10', '1'], ['10', '3'],
                         ['10', '5'], ['10', '7'], ['10', '9']]]]
     #traffic = [['udp', [['2', '3'], ['3', '2']]]]
-    switch_start_pairs = get_switch_start_pairs(traffic)
-    print(switch_start_pairs)
+    t = remove_duplicates(traffic[0][1])
+    switch_start_pairs = get_switch_start_pairs(t)
+    #switch_start_pairs = get_switch_start_pairs(traffic[0][1])
+    #print(switch_start_pairs)
 
     src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic)
     switches_num = 20
     reachability_matrix = [[0] * switches_num for x in range(switches_num)]
     intents = get_intents_to_send(graph, hosts_list, links, src_dst_switch_map, switch_start_pairs)
-    post_intents(intents)
+    #post_intents(intents)
 
     # while True:
     #     src, dst = map(int, input("Input src, dst:\n").split())

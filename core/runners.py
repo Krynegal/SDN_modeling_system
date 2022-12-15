@@ -16,9 +16,9 @@ def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_rec
     print('---start of processing---')
     print('processing...')
 
-    for i in receivers:
-        if i not in all_receivers:
-            hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
+    # for i in receivers:
+    #     if i not in all_receivers:
+    #         hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
 
     for i in range(len(receivers)):
         if receivers[i] not in all_receivers:
