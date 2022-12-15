@@ -9,8 +9,8 @@ scenario:
       name: custom_traffic2.txt
       time: 30
       duration: 30
-  - script:
-      id: 3
-      name: custom_traffic3.txt
-      time: 15
-      duration: 15
+#  - script:
+#      id: 3
+#      name: custom_traffic3.txt
+#      time: 15
+#      duration: 15

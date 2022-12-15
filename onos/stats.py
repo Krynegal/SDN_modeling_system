@@ -37,8 +37,8 @@ def get_stats(spm: {}, devices_number: int):
 
 
 def update_matrix(matrix, dev1, dev2, bytes):
-    dev1 = int(dev1[-1], 16) - 1
-    dev2 = int(dev2[-1], 16) - 1
+    dev1 = int(dev1[3:], 16) - 1
+    dev2 = int(dev2[3:], 16) - 1
     matrix[dev1][dev2] = round(bytes / 125_000, 2)
     matrix[dev2][dev1] = matrix[dev1][dev2]
 
@@ -58,8 +58,7 @@ def get_spm(links):
 
 
 def read_weights_matrix():
-    os.system(
-        'cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt /home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt')
+    os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt /home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt')
     with open("/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt", "r") as f:
         file = f.readlines()
     weights_matrix = []
@@ -104,8 +103,8 @@ def get_start_matrix(spm):
             all_instances = parse.urlparse(second_device_link)
             dict_from_query = parse.parse_qs(all_instances.query)
             second_device = dict_from_query['device'][0]
-            dev1 = int(device[-1], 16) - 1
-            dev2 = int(second_device[-1], 16) - 1
+            dev1 = int(device[3:], 16) - 1
+            dev2 = int(second_device[3:], 16) - 1
             matrix[dev1][dev2] = round(bytes / 125_000, 2)
             matrix[dev2][dev1] = matrix[dev1][dev2]
     return matrix

@@ -42,7 +42,7 @@ def run_stats_processing(links, num_devices: int):
                 for j in range(len(matrix[i])):
                     f.write('%7.2f, ' % (calc_new_weight(matrix[i][j])))
                 f.write('\n')
-        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a") as f:
+        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
             f.write(f"================================  {int(t) * 2} seconds  ==================================\n")
             for i in range(len(matrix)):
                 for j in range(len(matrix[i])):
