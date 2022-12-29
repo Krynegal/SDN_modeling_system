@@ -486,18 +486,3 @@ if __name__ == '__main__':
     reachability_matrix = [[0] * switches_num for x in range(switches_num)]
     intents = get_intents_to_send(graph, hosts_list, links, src_dst_switch_map, switch_start_pairs)
     #post_intents(intents)
-
-    # while True:
-    #     src, dst = map(int, input("Input src, dst:\n").split())
-    #     graph.adj_mat = stats.read_weights_matrix()
-    #     start_node = int(src)
-    #     paths = go_dijkstra(graph, start_node)
-    #     targets = [str(dst)]
-    #     routes = get_routes_for_each_target(targets, paths)
-    #     pair_intents = []
-    #     for route in routes:
-    #         pair_intents.extend(make_intent(route, h, links))
-    #     print("\n")
-    #     print(json.dumps(pair_intents, indent=4))
-    #     intents = {"intents": pair_intents}
-    #     post_intents(intents)
