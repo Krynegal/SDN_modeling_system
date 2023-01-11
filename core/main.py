@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import os
 import sys
-import threading
 import time
 from threading import Thread
 
@@ -29,9 +28,12 @@ from utils import host_addr_map, get_receivers, get_senders, fwd_activate
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom, run_stats_processing
 from onos.main import get_intents_to_send, post_intents, get_src_dst_map, get_links, \
-    get_dijkstra_graph, get_hosts, hosts_func, read_all_to_all, get_host_switch_map, get_switch_start_pairs, \
+    get_hosts, hosts_func, read_all_to_all, get_host_switch_map, get_switch_start_pairs, \
     get_src_dst_switch_map_reachability_matrix, remove_duplicates
+from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
+
+
 
 class Node():
     def __init__(self, data, indexloc=None):
@@ -145,43 +147,55 @@ while True:
     if len(input_line) == 1 and input_line[0] == 'm':
         CLI(net)
     elif input_line[0] == 'c':
+        # чистим файлы, оставшиеся после прошлых запусков
         delete_old_files()
         os.system(f'rm -rf {core_path}actions/*')
-        read_data = get_yaml_content()
 
+        # строим граф, который будем использовать для поиска путей минимальной стоимости
         links = get_links()
         graph = get_dijkstra_graph(links)
         hosts_list = get_hosts()
-        # hsm = get_host_switch_map(hosts_list)
-        # h = hosts_func(hosts_list)
-        # на основании traffic - [['1', '2'], ..., ['2', '10']] - строится матрица достижимости
+
+        # матрица достижимости для свитчей
         reachability_matrix = [[0] * switches_num for x in range(switches_num)]
-        # src_dst_map строится на основании матрицы достижимости, так как она по сути ей и является только в другой форме
 
         threads = []
         all_receivers = []
-        mutex = threading.Lock()
+        read_data = get_yaml_content()
         for action in read_data['scenario']:
+            # получаем информацию об очередном потоке
+            id = action['script']['id']
             start_time = action['script']['time']
+            duration = action['script']['duration']
             print(f"{action['script']['id']} in cycle! sleep {start_time} seconds")
             time.sleep(start_time)
-            custom_t_file_path = core_path + action['script']['name']
-            duration = action['script']['duration']
-            id = action['script']['id']
 
+            # получаем трафик, который будет передаваться в потоке
+            custom_t_file_path = core_path + action['script']['name']
             traffic = read_custom_traffic(custom_t_file_path)
 
             # === принимаем решение о создании интента ===
             # проверяем содержится ли пара src-dst из traffic в матрице достижимости
             # если да, то НЕ кладем эту пару в src_dst_map
             # если нет, то кладем эту пару в src_dst_map и обновляем матрицу достижимости
+
             host_pairs_only = remove_duplicates(traffic[0][1])
-            switch_start_pairs = get_switch_start_pairs(host_pairs_only)
+
+            # TODO: упаковать в функцию
+            # мапа хост : свитч
+            host_switch_conn = {}
+            with open(topo_path_hosts, "r") as f:
+                for line in f.readlines():
+                    host, switch = map(int, line.strip().split(", "))
+                    host_switch_conn[host] = switch
+            # определяем свитчи, которые будут использоваться в качестве стартовых нод для пар [<src, dst>,
+            # ... ] из трафика
+            switch_start_pairs = get_switch_start_pairs(host_pairs_only, host_switch_conn)
             print(switch_start_pairs)
-            src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic)
+            src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn)
             if len(src_dst_switch_map) != 0:
                 if id != 1:
-                    # обновляем матрицу графа дейкстры
+                    # обновляем матрицу весов графа
                     graph.adj_mat = read_weights_matrix()
                 intents = get_intents_to_send(graph, hosts_list, links, src_dst_switch_map, switch_start_pairs)
                 post_intents(intents)

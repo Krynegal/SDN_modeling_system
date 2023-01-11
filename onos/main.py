@@ -23,7 +23,7 @@ def get_links():
         links = res.json()["links"]
         with open("../jsonFiles/topology_links.json", "w") as f:
             f.write(json.dumps(res.json(), indent=4))
-        #print(json.dumps(res.json(), indent=4))
+        # print(json.dumps(res.json(), indent=4))
         return links
     except requests.exceptions.ConnectionError:
         print("Oops. Seems like dns lookup failed..")
@@ -62,6 +62,7 @@ def device_num_to_URI(dev_num):
     if len(dev_num) == 1:
         dev_num = '0' + dev_num
     return dev_num
+
 
 def make_intent(points, hosts, links, src_host, dst_host):
     intents = []
@@ -126,19 +127,21 @@ def make_intent(points, hosts, links, src_host, dst_host):
 
                     if point < 1:
                         intent["ingressPoint"]["port"] = "1"
-                        #if points.list[point] % 2 == 0:
+                        # if points.list[point] % 2 == 0:
                         if int(src_host) % 2 == 0:
                             intent["ingressPoint"]["port"] = "2"
-                    elif (link["dst"]["device"] == f"of:00000000000000{device_num_to_URI(hex(points.list[point - 1])[2:])}"
+                    elif (link["dst"][
+                              "device"] == f"of:00000000000000{device_num_to_URI(hex(points.list[point - 1])[2:])}"
                           and points.list[point - 1] in points.list):
                         portIn = link["src"]["port"]
                         intent["ingressPoint"]["port"] = portIn
                     if point + 1 > len(points.list) - 1:
                         intent["egressPoint"]["port"] = "1"
-                        #if points.list[point] % 2 == 0:
+                        # if points.list[point] % 2 == 0:
                         if int(dst_host) % 2 == 0:
                             intent["egressPoint"]["port"] = "2"
-                    elif (link["dst"]["device"] == f"of:00000000000000{device_num_to_URI(hex(points.list[point + 1])[2:])}"
+                    elif (link["dst"][
+                              "device"] == f"of:00000000000000{device_num_to_URI(hex(points.list[point + 1])[2:])}"
                           and points.list[point + 1] in points.list):
                         portOut = link["src"]["port"]
                         intent["egressPoint"]["port"] = portOut
@@ -173,7 +176,7 @@ def make_intent(points, hosts, links, src_host, dst_host):
         if len(points.list) == 1:
             intent["ingressPoint"]["port"] = "2"
             intent["egressPoint"]["port"] = "1"
-            #if points.list[point] % 2 == 0:
+            # if points.list[point] % 2 == 0:
             if int(dst_host) % 2 == 0:
                 intent["ingressPoint"]["port"] = "1"
                 intent["egressPoint"]["port"] = "2"
@@ -218,22 +221,6 @@ def post_flows(data):
         print("flows were successfully send")
     else:
         print("some problem occured while sending flows")
-
-
-def get_devices_list(links):
-    devices = []
-    for link in links:
-        devices.append(link["src"]["device"])
-    devices = list(set(devices))
-    devices.sort()
-    return devices
-
-
-def get_nodes(devices):
-    nodes = []
-    for device in devices:
-        nodes.append(dijkstra.Node(device))
-    return nodes
 
 
 def get_hosts():
@@ -341,23 +328,15 @@ def get_intents_to_send(graph: dijkstra.Graph, h, links, src_dst_switch_map: {},
         for start_switch in switch_start_pairs:
             for pair in switch_start_pairs[start_switch]:
                 for route in routes:
-                    if len(route.list) == 1 and route.list[0] == define_switch_on_host(int(pair[0])) == define_switch_on_host(int(pair[1])) or start_switch == \
+                    if len(route.list) == 1 and route.list[0] == define_switch_on_host(
+                            int(pair[0])) == define_switch_on_host(int(pair[1])) or start_switch == \
                             route.list[0] and define_switch_on_host(int(pair[1])) == route.list[-1]:
                         pair_intents.extend(make_intent(route, h, links, pair[0], pair[1]))
                         break
     print("\n")
-    #print(json.dumps(pair_intents, indent=4))
+    # print(json.dumps(pair_intents, indent=4))
     intents = {"intents": pair_intents}
     return intents
-
-
-def get_dijkstra_graph(links) -> dijkstra.Graph:
-    devices = get_devices_list(links)
-    nodes = get_nodes(devices)
-    print([x.data for x in nodes])
-    graph = dijkstra.Graph.create_from_nodes(nodes)
-    graph.adj_mat = matrix.get_matrix(links, len(devices))
-    return graph
 
 
 def define_switch_on_host(host: int):
@@ -367,13 +346,16 @@ def define_switch_on_host(host: int):
     return int(switch)
 
 
-def get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic):
+def get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn):
+    """ Возвращает мапу вида: src_switch:[dst_switch1, dst_switch2,...] """
     hosts_pairs_only = traffic[0][1]
     src_dst_switch_map = {}
     for pair in hosts_pairs_only:
-        src_switch = define_switch_on_host(int(pair[0]))
-        dst_switch = define_switch_on_host(int(pair[1]))
-        #if reachability_matrix[src_switch][dst_switch] != 1:
+        # src_switch = define_switch_on_host(int(pair[0]))
+        # dst_switch = define_switch_on_host(int(pair[1]))
+        src_switch = host_switch_conn[int(pair[0])]
+        dst_switch = host_switch_conn[int(pair[1])]
+        # if reachability_matrix[src_switch][dst_switch] != 1:
         if src_switch not in src_dst_switch_map:
             src_dst_switch_map[src_switch] = []
         src_dst_switch_map[src_switch].append(dst_switch)
@@ -388,37 +370,35 @@ def get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic):
     return src_dst_switch_map
 
 
-def get_switch_start_pairs(host_pairs):
-    switch_start_pairs = {}
+def get_switch_start_pairs(host_pairs, host_switch_conn):
+    start_switch_pairs = {}
     for pair in host_pairs:
         src_host = int(pair[0])
-        start_switch = int(src_host / 2)
-        if src_host % 2 != 0:
-            start_switch = int((src_host + 1) / 2)
-        if start_switch not in switch_start_pairs:
-            switch_start_pairs[start_switch] = []
-        switch_start_pairs[start_switch].append(pair)
-    return switch_start_pairs
-
-
-def get_src_dsts_host_map(traffic):
-    m = {}
-    for pair in traffic:
-        src, dst = pair[0], pair[1]
-        if src not in m:
-            m[src] = []
-        if dst in m and src in m[dst]:
-            continue
-        m[src].append(dst)
-    return m
+        # start_switch = int(src_host / 2)
+        # if src_host % 2 != 0:
+        #     start_switch = int((src_host + 1) / 2)
+        # определяем свитч, к которому подключен хост
+        start_switch = host_switch_conn[src_host]
+        if start_switch not in start_switch_pairs:
+            start_switch_pairs[start_switch] = []
+        start_switch_pairs[start_switch].append(pair)
+    return start_switch_pairs
 
 
 def remove_duplicates(all_traffic):
-    without_dup = get_src_dsts_host_map(all_traffic)
+    """ Преобразует список вида src->dst, dst->src,... в src<->dst..."""
+    without_dup = {}
+    for pair in all_traffic:
+        src, dst = pair[0], pair[1]
+        if src not in without_dup:
+            without_dup[src] = []
+        if dst in without_dup and src in without_dup[dst]:
+            continue
+        without_dup[src].append(dst)
     res = []
-    for key in without_dup:
-        for dst in without_dup[key]:
-            res.append([key, dst])
+    for src in without_dup:
+        for dst in without_dup[src]:
+            res.append([src, dst])
     return res
 
 
@@ -429,9 +409,9 @@ if __name__ == '__main__':
 
     links = get_links()
 
-    devices = get_devices_list(links)
+    devices = dijkstra.get_devices_list(links)
 
-    nodes = get_nodes(devices)
+    nodes = dijkstra.get_nodes(devices)
     print(nodes)
 
     graph = dijkstra.Graph.create_from_nodes(nodes)
@@ -475,14 +455,14 @@ if __name__ == '__main__':
                         ['7', '6'], ['7', '8'], ['7', '10'], ['8', '1'], ['8', '3'], ['8', '5'], ['8', '7'], ['8', '9'],
                         ['9', '2'], ['9', '4'], ['9', '6'], ['9', '8'], ['9', '10'], ['10', '1'], ['10', '3'],
                         ['10', '5'], ['10', '7'], ['10', '9']]]]
-    #traffic = [['udp', [['2', '3'], ['3', '2']]]]
+    # traffic = [['udp', [['2', '3'], ['3', '2']]]]
     t = remove_duplicates(traffic[0][1])
     switch_start_pairs = get_switch_start_pairs(t)
-    #switch_start_pairs = get_switch_start_pairs(traffic[0][1])
-    #print(switch_start_pairs)
+    # switch_start_pairs = get_switch_start_pairs(traffic[0][1])
+    # print(switch_start_pairs)
 
     src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic)
     switches_num = 20
     reachability_matrix = [[0] * switches_num for x in range(switches_num)]
     intents = get_intents_to_send(graph, hosts_list, links, src_dst_switch_map, switch_start_pairs)
-    #post_intents(intents)
+    # post_intents(intents)
