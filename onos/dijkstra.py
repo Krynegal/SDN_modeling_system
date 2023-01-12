@@ -1,3 +1,6 @@
+from onos.matrix import get_matrix
+
+
 class Node:
     def __init__(self, data, indexloc=None):
         self.data = data
@@ -31,7 +34,6 @@ class Graph:
         self.adj_mat[src - 1][dst - 1] = weigth
         self.adj_mat[dst - 1][src - 1] = weigth
         return True
-
 
     # Опциональный весовой аргумент для поддержки алгоритма Дейкстры
     def connect(self, node1, node2, weight=1):
@@ -111,7 +113,6 @@ class Graph:
             if node.data == data:
                 return node
 
-
     def dijkstra(self, node):
         # Получает индекс узла (или поддерживает передачу int)
         nodenum = self.get_index_from_node(node)
@@ -142,8 +143,6 @@ class Graph:
                     min_node = n
 
             # Добавляет мин. расстояние узла до увиденного, убирает очередь
-            print(f'queue: {queue}')
-            print(f'min_node: {min_node}')
             queue.remove(min_node)
             seen.add(min_node)
             # Получает все следующие перескоки
@@ -158,3 +157,28 @@ class Graph:
                     dist[node.index][1] = list(dist[min_node][1])
                     dist[node.index][1].append(node)
         return dist
+
+
+def get_devices_list(links):
+    devices = []
+    for link in links:
+        devices.append(link["src"]["device"])
+    devices = list(set(devices))
+    devices.sort()
+    return devices
+
+
+def get_nodes(devices):
+    nodes = []
+    for device in devices:
+        nodes.append(Node(device))
+    return nodes
+
+
+def get_dijkstra_graph(links) -> Graph:
+    devices = get_devices_list(links)
+    nodes = get_nodes(devices)
+    print([x.data for x in nodes])
+    graph = Graph.create_from_nodes(nodes)
+    graph.adj_mat = get_matrix(links, len(devices))
+    return graph

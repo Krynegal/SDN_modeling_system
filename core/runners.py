@@ -1,8 +1,9 @@
 import time
 
 from onos.main import get_intents_to_send, post_intents, get_src_dst_map, read_custom_traffic, get_links, \
-    get_dijkstra_graph, get_hosts, hosts_func, read_all_to_all
+    get_hosts, hosts_func, read_all_to_all
 from onos.stats import get_spm, get_stats
+from onos.dijkstra import get_dijkstra_graph
 
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
@@ -16,9 +17,9 @@ def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_rec
     print('---start of processing---')
     print('processing...')
 
-    for i in receivers:
-        if i not in all_receivers:
-            hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
+    # for i in receivers:
+    #     if i not in all_receivers:
+    #         hosts[int(i) - 1].cmd('kill -9 $(pidof ITGRecv)')
 
     for i in range(len(receivers)):
         if receivers[i] not in all_receivers:
@@ -42,7 +43,7 @@ def run_stats_processing(links, num_devices: int):
                 for j in range(len(matrix[i])):
                     f.write('%7.2f, ' % (calc_new_weight(matrix[i][j])))
                 f.write('\n')
-        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a") as f:
+        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
             f.write(f"================================  {int(t) * 2} seconds  ==================================\n")
             for i in range(len(matrix)):
                 for j in range(len(matrix[i])):

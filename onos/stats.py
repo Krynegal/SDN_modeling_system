@@ -2,8 +2,6 @@ import os
 
 import requests as req
 import sys
-import requests.exceptions
-import main
 from urllib import parse
 
 USER = ("onos", "rocks")
@@ -37,8 +35,8 @@ def get_stats(spm: {}, devices_number: int):
 
 
 def update_matrix(matrix, dev1, dev2, bytes):
-    dev1 = int(dev1[-1], 16) - 1
-    dev2 = int(dev2[-1], 16) - 1
+    dev1 = int(dev1[3:], 16) - 1
+    dev2 = int(dev2[3:], 16) - 1
     matrix[dev1][dev2] = round(bytes / 125_000, 2)
     matrix[dev2][dev1] = matrix[dev1][dev2]
 
@@ -69,50 +67,8 @@ def read_weights_matrix():
     return weights_matrix
 
 
-# not used
-def get_stats_old(spm: {}):
-    devices_number = 10
-    matrix = [[0] * 10 for _ in range(10)]
-    try:
-        IP = main.get_ip()
-        for device in spm:
-            for port in spm[device]:
-                res = req.get(f"http://{IP}:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
-                bytes = res.json()["loads"][0]["latest"]
-                if res.json()["loads"][0]["latest"] == -1:
-                    bytes = res.json()["loads"][1]["latest"]
-                second_device_link = res.json()["loads"][1]["link"]
-                all_instances = parse.urlparse(second_device_link)
-                dict_from_query = parse.parse_qs(all_instances.query)
-                second_device = dict_from_query['device'][0]
-                update_matrix(matrix, device, second_device, bytes)
-        return matrix
-    except requests.exceptions.ConnectionError:
-        print("Oops. Seems like dns lookup failed..")
-        sys.exit()
-
-
-# not used
-def get_start_matrix(spm):
-    matrix = [[0] * 10 for _ in range(10)]
-    for device in spm:
-        for port in spm[device]:
-            res = req.get(f"http://172.17.0.2:8181/onos/v1/statistics/flows/link?device={device}&port={port}",
-                          auth=USER)
-            bytes = res.json()["loads"][0]["latest"]
-            second_device_link = res.json()["loads"][1]["link"]
-            all_instances = parse.urlparse(second_device_link)
-            dict_from_query = parse.parse_qs(all_instances.query)
-            second_device = dict_from_query['device'][0]
-            dev1 = int(device[-1], 16) - 1
-            dev2 = int(second_device[-1], 16) - 1
-            matrix[dev1][dev2] = round(bytes / 125_000, 2)
-            matrix[dev2][dev1] = matrix[dev1][dev2]
-    return matrix
-
-
 if __name__ == '__main__':
-    #read_weights_matrix()
+    # read_weights_matrix()
     # global IP
     # links = main.get_links()
     # src_ports_map = get_spm(links)
