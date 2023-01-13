@@ -10,7 +10,7 @@ USER = ("onos", "rocks")
 
 def get_intents():
     try:
-        res = req.get(f"http://{IP}:8181/onos/v1/intents?detail=true", auth=USER)
+        res = req.get(f"http://172.17.0.2:8181/onos/v1/intents?detail=true", auth=USER)
         intents = res.json()["intents"]
         # print(json.dumps(res.json(), indent=4))
         return intents
@@ -23,7 +23,7 @@ def delete_all_intents(intents):
     intents_num = len(intents)
     for intent in intents:
         appId, key = intent["appId"], intent["key"]
-        res = req.delete(f"http://{IP}:8181/onos/v1/intents/{appId}/{key}", auth=USER)
+        res = req.delete(f"http://172.17.0.2:8181/onos/v1/intents/{appId}/{key}", auth=USER)
         if res.status_code == 204:
             successful_requests += 1
     if successful_requests == intents_num:
@@ -33,8 +33,6 @@ def delete_all_intents(intents):
         clear()
 
 def clear():
-    global IP
-    IP = main.get_ip()
     intents = get_intents()
     delete_all_intents(intents)
 

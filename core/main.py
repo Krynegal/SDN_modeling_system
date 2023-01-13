@@ -24,26 +24,25 @@ sys.path.append(conf_path)
 print(sys.path)
 
 from core.read_scenario import get_yaml_content
-from utils import host_addr_map, get_receivers, get_senders, fwd_activate
-from scripters import generate_custom, generate_all_to_all, read_custom_traffic
-from runners import run_all, run_custom, run_stats_processing
-from onos.main import get_intents_to_send, post_intents, get_src_dst_map, get_links, \
-    get_hosts, hosts_func, read_all_to_all, get_host_switch_map, get_switch_start_pairs, \
-    get_src_dst_switch_map_reachability_matrix, remove_duplicates
+from utils import get_host_addr_map, get_receivers, get_senders
+from scripters import generate_custom, read_custom_traffic
+from runners import run_custom, run_stats_processing
+from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_switch_map_reachability_matrix, \
+    remove_duplicates, get_hosts_info
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
+from onos.api import post_intents, get_links, get_hosts, fwd_activate
 
 
-
-class Node():
+class Node:
     def __init__(self, data, indexloc=None):
         self.data = data
         self.index = indexloc
 
 
-class Graph():
+class Graph:
     @classmethod
-    def create_from_nodes(self, nodes):
+    def create_from_nodes(cls, nodes):
         return Graph(len(nodes), len(nodes), nodes)
 
     def __init__(self, row, col, nodes=None):
@@ -102,11 +101,6 @@ class MyTopo(Topo):
                     self.addLink(switches[row], switches[col], bw=1000)
 
 
-def parse_p_args(input):
-    rate, size, time, protocol = input[1], input[2], input[3], input[4]
-    return rate, size, time, protocol
-
-
 def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteLogs.sh')
     os.system(f'cd {itg_path} && ./deleteDat.sh')
@@ -121,129 +115,117 @@ switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
 topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
-net = Mininet()
-c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
-topo = MyTopo()
-net = Mininet(topo=topo, controller=RemoteController, build=False, link=TCLink)
-net.addController(c0)
-net.build()
-net.start()
-time.sleep(5)
-net.pingAll()
 
-fwd_activate(False)
+def main():
+    net = Mininet()
+    c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
+    topo = MyTopo()
+    net = Mininet(topo=topo, controller=RemoteController, build=False, link=TCLink)
+    net.addController(c0)
+    net.build()
+    net.start()
+    time.sleep(5)
+    net.pingAll()
 
-host_addr_map = host_addr_map(topo)
-hosts = []
-for h_key in host_addr_map.keys():
-    hosts.append(net.get(f'h{h_key}'))
-switches_num = 20
+    fwd_activate(False)
 
-while True:
-    print('input "m" to run mininet console')
-    print('input "c" to run custom')
-    print('input "g <rate> <size> <time (ms)> <protocol>" to generate scripts')
-    input_line = input().split()
-    if len(input_line) == 1 and input_line[0] == 'm':
-        CLI(net)
-    elif input_line[0] == 'c':
-        # чистим файлы, оставшиеся после прошлых запусков
-        delete_old_files()
-        os.system(f'rm -rf {core_path}actions/*')
+    host_addr_map = get_host_addr_map(topo)
+    hosts = []
+    for h_key in host_addr_map.keys():
+        hosts.append(net.get(f'h{h_key}'))
+    switches_num = 20
 
-        # строим граф, который будем использовать для поиска путей минимальной стоимости
-        links = get_links()
-        graph = get_dijkstra_graph(links)
-        hosts_list = get_hosts()
+    while True:
+        print('input "m" to run mininet console')
+        print('input "c" to run custom')
+        input_line = input().split()
+        if len(input_line) == 1 and input_line[0] == 'm':
+            CLI(net)
+        elif input_line[0] == 'c':
+            # чистим файлы, оставшиеся после прошлых запусков
+            delete_old_files()
+            os.system(f'rm -rf {core_path}actions/*')
 
-        # матрица достижимости для свитчей
-        reachability_matrix = [[0] * switches_num for x in range(switches_num)]
+            # строим граф, который будем использовать для поиска путей минимальной стоимости
+            links = get_links()
+            graph = get_dijkstra_graph(links)
 
-        threads = []
-        all_receivers = []
-        read_data = get_yaml_content()
-        for action in read_data['scenario']:
-            # получаем информацию об очередном потоке
-            id = action['script']['id']
-            start_time = action['script']['time']
-            duration = action['script']['duration']
-            print(f"{action['script']['id']} in cycle! sleep {start_time} seconds")
-            time.sleep(start_time)
+            hosts_list = get_hosts()
+            hosts_info = get_hosts_info(hosts_list)
 
-            # получаем трафик, который будет передаваться в потоке
-            custom_t_file_path = core_path + action['script']['name']
-            traffic = read_custom_traffic(custom_t_file_path)
+            # матрица достижимости для свитчей
+            reachability_matrix = [[0] * switches_num for _ in range(switches_num)]
 
-            # === принимаем решение о создании интента ===
-            # проверяем содержится ли пара src-dst из traffic в матрице достижимости
-            # если да, то НЕ кладем эту пару в src_dst_map
-            # если нет, то кладем эту пару в src_dst_map и обновляем матрицу достижимости
+            threads = []
+            all_receivers = []
+            read_data = get_yaml_content()
+            for action in read_data['scenario']:
+                # получаем информацию об очередном потоке
+                id = action['script']['id']
+                start_time = action['script']['time']
+                duration = action['script']['duration']
+                print(f"{action['script']['id']} in cycle! sleep {start_time} seconds")
+                time.sleep(start_time)
 
-            host_pairs_only = remove_duplicates(traffic[0][1])
+                # получаем трафик, который будет передаваться в потоке
+                custom_t_file_path = core_path + action['script']['name']
+                traffic = read_custom_traffic(custom_t_file_path)
 
-            # TODO: упаковать в функцию
-            # мапа хост : свитч
-            host_switch_conn = {}
-            with open(topo_path_hosts, "r") as f:
-                for line in f.readlines():
-                    host, switch = map(int, line.strip().split(", "))
-                    host_switch_conn[host] = switch
-            # определяем свитчи, которые будут использоваться в качестве стартовых нод для пар [<src, dst>,
-            # ... ] из трафика
-            switch_start_pairs = get_switch_start_pairs(host_pairs_only, host_switch_conn)
-            print(switch_start_pairs)
-            src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn)
-            if len(src_dst_switch_map) != 0:
-                if id != 1:
-                    # обновляем матрицу весов графа
-                    graph.adj_mat = read_weights_matrix()
-                intents = get_intents_to_send(graph, hosts_list, links, src_dst_switch_map, switch_start_pairs)
-                post_intents(intents)
-            else:
-                print("src_dst_map is empty. There are no new intents")
+                host_pairs_only = remove_duplicates(traffic[0][1])
 
-            receivers = get_receivers(traffic)
-            senders = get_senders(traffic)
-            generate_custom(id, host_addr_map, traffic, duration)
+                # TODO: упаковать в функцию
+                # мапа хост : свитч
+                host_switch_conn = {}
+                with open(topo_path_hosts, "r") as f:
+                    for line in f.readlines():
+                        host, switch = map(int, line.strip().split(", "))
+                        host_switch_conn[host] = switch
+                # определяем свитчи, которые будут использоваться в качестве стартовых нод для пар [<src, dst>,
+                # ... ] из трафика
+                switch_start_pairs = get_switch_start_pairs(host_pairs_only, host_switch_conn)
+                print(switch_start_pairs)
+                src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic,
+                                                                                host_switch_conn)
+                if len(src_dst_switch_map) != 0:
+                    if id != 1:
+                        # обновляем матрицу весов графа
+                        graph.adj_mat = read_weights_matrix()
+                    intents = get_intents_to_send(graph, hosts_info, links, src_dst_switch_map, switch_start_pairs)
+                    post_intents(intents)
+                else:
+                    print("src_dst_map is empty. There are no new intents")
 
-            if id == 1:
-                time.sleep(20)
-                stat_thread = Thread(name="stats thread", target=run_stats_processing, args=(links, switches_num,))
-                stat_thread.start()
-                threads.append(stat_thread)
+                receivers = get_receivers(traffic)
+                senders = get_senders(traffic)
+                generate_custom(id, host_addr_map, traffic, duration)
 
-            scripts_path = core_path + f'actions/action{id}/'
-            name = str(id)
-            thread = Thread(name=name, target=run_custom,
-                            args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
-            thread.start()
-            print(f'thread: {thread.name} is started')
-            threads.append(thread)
+                if id == 1:
+                    time.sleep(20)
+                    stat_thread = Thread(name="stats thread", target=run_stats_processing, args=(links, switches_num,))
+                    stat_thread.start()
+                    threads.append(stat_thread)
 
-        for thread in threads:
-            print(f"thread {thread} is STOPPED")
-            thread.join()
+                scripts_path = core_path + f'actions/action{id}/'
+                name = str(id)
+                thread = Thread(name=name, target=run_custom,
+                                args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
+                thread.start()
+                print(f'thread: {thread.name} is started')
+                threads.append(thread)
 
-        print("here")
-        for i in range(1, len(hosts) + 1):
-            hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
+            for thread in threads:
+                print(f"thread {thread} is STOPPED")
+                thread.join()
 
-    elif input_line[0] == 'g':
-        delete_old_files()
-        if len(input_line) == 1:
-            generate_all_to_all(host_addr_map)
-            run_all(hosts)
-        elif len(input_line) == 5:
-            rate, size, time, protocol = parse_p_args(input_line)
-            generate_all_to_all(host_addr_map, rate, size, time, protocol)
-            run_all(hosts)
-        else:
-            print('some args were skipped')
-            continue
-    elif input_line[0] == 'k':
-        for i in range(1, len(hosts) + 1):
-            hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
-    elif input_line[0] == 'q':
-        break
+            print("all threads are stopped")
+            for i in range(1, len(hosts) + 1):
+                hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
+        elif input_line[0] == 'k':
+            for i in range(1, len(hosts) + 1):
+                hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
+        elif input_line[0] == 'q':
+            break
+    net.stop()
 
-net.stop()
+
+main()
