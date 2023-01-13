@@ -5,7 +5,7 @@ scripts_path = core_path + 'scripts/'
 USER = ("onos", "rocks")
 
 
-def host_addr_map(topo):
+def get_host_addr_map(topo):
     g_nodes = topo.g.node
     m = {}
     for node in g_nodes:

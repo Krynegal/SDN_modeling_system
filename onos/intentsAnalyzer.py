@@ -11,10 +11,11 @@ def get_intents():
         f.write(json.dumps(res.json(), indent=4))
     return intents
 
+
 if __name__ == '__main__':
     intents = get_intents()
-    SOURCE = "1E:E9:86:A0:08:49"
-    DESTINATION = "F2:77:52:DF:58:01"
+    SOURCE = "C2:35:2E:08:99:F1"
+    DESTINATION = "9E:F0:6D:81:02:48"
     intents_num = 0
     for intent in intents:
         src_mac = intent["treatment"]["instructions"][0]["mac"]
