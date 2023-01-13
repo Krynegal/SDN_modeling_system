@@ -79,10 +79,8 @@ def make_intent(points, hosts, links, src_host, dst_host):
     src_switch = to_onos_device(to_hex(points.list[0]))
     print(f"Switches: {src_switch} -> {dst_switch}")
     print(f"Hosts: {src_host} -> {dst_host}")
-    # ETH_SRC = hosts[src_host]["mac"]
     ETH_SRC = host_mac_map[str(src_host)]
     print("ETH_SRC ", ETH_SRC)
-    # ETH_DST = hosts[dst_host]["mac"]
     ETH_DST = host_mac_map[str(dst_host)]
     print("ETH_DST ", ETH_DST)
 
@@ -126,60 +124,30 @@ def make_intent(points, hosts, links, src_host, dst_host):
         if len(points.list) != 1:
             for link in links:
                 if link["src"]["device"] == deviceId and int(link["dst"]["device"][3:], 16) in points.list:
-                    # fat tree
-
                     if point < 1:
                         intent["ingressPoint"]["port"] = "1"
-                        # if points.list[point] % 2 == 0:
                         if int(src_host) % 2 == 0:
                             intent["ingressPoint"]["port"] = "2"
                     elif (link["dst"][
-                              "device"] == to_onos_device(to_hex(points.list[point - 1])) # f"of:00000000000000{device_num_to_URI(hex(points.list[point - 1])[2:])}"
+                              "device"] == to_onos_device(to_hex(points.list[point - 1]))
                           and points.list[point - 1] in points.list):
                         portIn = link["src"]["port"]
                         intent["ingressPoint"]["port"] = portIn
                     if point + 1 > len(points.list) - 1:
                         intent["egressPoint"]["port"] = "1"
-                        # if points.list[point] % 2 == 0:
                         if int(dst_host) % 2 == 0:
                             intent["egressPoint"]["port"] = "2"
                     elif (link["dst"][
-                              "device"] == to_onos_device(to_hex(points.list[point + 1])) # f"of:00000000000000{device_num_to_URI(hex(points.list[point + 1])[2:])}"
+                              "device"] == to_onos_device(to_hex(points.list[point + 1]))
                           and points.list[point + 1] in points.list):
                         portOut = link["src"]["port"]
                         intent["egressPoint"]["port"] = portOut
                     else:
                         continue
 
-                ######################### all-to-all #########################
-                # if point < 1:
-                #     intent["ingressPoint"]["port"] = "1"
-                # # номер устройства
-                # dn = hex(points.list[point - 1])[2:]
-                # if len(dn) == 1:
-                #     dn = '0' + dn
-                # elif (link["dst"]["device"] == f"of:00000000000000{dn}"
-                #       and points.list[point - 1] in points.list):
-                #     portIn = link["src"]["port"]
-                #     if portIn == "":
-                #         print(link["src"]["device"], link["dst"]["device"])
-                #     intent["ingressPoint"]["port"] = portIn
-                # if point + 1 > len(points.list) - 1:
-                #     intent["egressPoint"]["port"] = "1"
-                # dn = hex(points.list[point + 1])[2:]
-                # if len(dn) == 1:
-                #     dn = '0' + dn
-                # elif (link["dst"]["device"] == f"of:00000000000000{dn}"
-                #       and points.list[point + 1] in points.list):
-                #     portOut = link["src"]["port"]
-                #     intent["egressPoint"]["port"] = portOut
-                # else:
-                #     continue
-                ##############################################################
         if len(points.list) == 1:
             intent["ingressPoint"]["port"] = "2"
             intent["egressPoint"]["port"] = "1"
-            # if points.list[point] % 2 == 0:
             if int(dst_host) % 2 == 0:
                 intent["ingressPoint"]["port"] = "1"
                 intent["egressPoint"]["port"] = "2"
@@ -268,22 +236,6 @@ def read_all_to_all(hosts: dict):
     return d
 
 
-def get_receivers(traffic):
-    receivers = []
-    for t in traffic:
-        for n in t[1]:
-            receivers.append(n[1])
-    return list(set(receivers))
-
-
-# def get_senders(traffic):
-#     senders = []
-#     for t in traffic:
-#         for n in t[1]:
-#             senders.append(n[0])
-#     return list(set(senders))
-
-
 # def get_src_dst_map(traffic):
 #     src_dst_map = {}
 #     for pair in traffic[0][1]:
@@ -320,7 +272,6 @@ def get_routes_for_each_switch_target(switch_targets: list, paths: list):
 
 def get_intents_to_send(graph: dijkstra.Graph, h, links, src_dst_switch_map: {}, switch_start_pairs: {}) -> dict:
     pair_intents = []
-    all_routes = []
     print(f'src_dst_switch_map: {src_dst_switch_map}')
     for src_switch in src_dst_switch_map:
         start_switch_node = int(src_switch)
@@ -354,11 +305,8 @@ def get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, hos
     hosts_pairs_only = traffic[0][1]
     src_dst_switch_map = {}
     for pair in hosts_pairs_only:
-        #src_switch = define_switch_on_host(int(pair[0]))
-        #dst_switch = define_switch_on_host(int(pair[1]))
         src_switch = host_switch_conn[int(pair[0])]
         dst_switch = host_switch_conn[int(pair[1])]
-        # if reachability_matrix[src_switch][dst_switch] != 1:
         if src_switch not in src_dst_switch_map:
             src_dst_switch_map[src_switch] = []
         src_dst_switch_map[src_switch].append(dst_switch)
@@ -377,9 +325,6 @@ def get_switch_start_pairs(host_pairs, host_switch_conn):
     start_switch_pairs = {}
     for pair in host_pairs:
         src_host = int(pair[0])
-        # start_switch = int(src_host / 2)
-        # if src_host % 2 != 0:
-        #     start_switch = int((src_host + 1) / 2)
         # определяем свитч, к которому подключен хост
         start_switch = host_switch_conn[src_host]
         if start_switch not in start_switch_pairs:
@@ -406,8 +351,6 @@ def remove_duplicates(all_traffic):
 
 
 if __name__ == '__main__':
-    # type = input('Enter "c" for custom\nEnter "g" for all-to-all')
-
     IP = get_ip()
 
     links = get_links()
