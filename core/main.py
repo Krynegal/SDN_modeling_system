@@ -27,7 +27,7 @@ from core.read_scenario import get_yaml_content
 from utils import host_addr_map, get_receivers, get_senders, fwd_activate
 from scripters import generate_custom, generate_all_to_all, read_custom_traffic
 from runners import run_all, run_custom, run_stats_processing
-from onos.main import get_intents_to_send, post_intents, get_src_dst_map, get_links, \
+from onos.main import get_intents_to_send, post_intents, get_links, \
     get_hosts, hosts_func, read_all_to_all, get_host_switch_map, get_switch_start_pairs, \
     get_src_dst_switch_map_reachability_matrix, remove_duplicates
 from onos.dijkstra import get_dijkstra_graph

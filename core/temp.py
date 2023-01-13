@@ -1,2 +1,5 @@
+def to_hex(num):
+    return f'{num:x}'
+
 if __name__ == '__main__':
-    pass
+    print(to_hex(11))

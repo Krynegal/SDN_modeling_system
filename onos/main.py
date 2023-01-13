@@ -64,13 +64,19 @@ def device_num_to_URI(dev_num):
     return dev_num
 
 
+def to_onos_device(dev_num: str):
+    return "of:" + dev_num.zfill(16)
+
+
+def to_hex(num):
+    return f'{num:x}'
+
+
 def make_intent(points, hosts, links, src_host, dst_host):
     intents = []
     host_mac_map = get_host_mac_map(hosts)
-    # src_host = f"of:000000000000000{src_host}"
-    # dst_host = f"of:000000000000000{dst_host}"
-    dst_switch = f"of:000000000000000{hex(points.list[len(points.list) - 1])[2:]}"
-    src_switch = f"of:000000000000000{hex(points.list[0])[2:]}"
+    dst_switch = to_onos_device(to_hex(points.list[len(points.list) - 1]))
+    src_switch = to_onos_device(to_hex(points.list[0]))
     print(f"Switches: {src_switch} -> {dst_switch}")
     print(f"Hosts: {src_host} -> {dst_host}")
     # ETH_SRC = hosts[src_host]["mac"]
@@ -84,10 +90,7 @@ def make_intent(points, hosts, links, src_host, dst_host):
         portIn = ""
         portOut = ""
 
-        dn = hex(points.list[point])[2:]
-        if len(dn) == 1:
-            dn = '0' + dn
-        deviceId = f"of:00000000000000{dn}"
+        deviceId = to_onos_device(to_hex(points.list[point]))
         intent = {
             "type": "PointToPointIntent",
             "appId": "org.onosproject.cli",
@@ -131,7 +134,7 @@ def make_intent(points, hosts, links, src_host, dst_host):
                         if int(src_host) % 2 == 0:
                             intent["ingressPoint"]["port"] = "2"
                     elif (link["dst"][
-                              "device"] == f"of:00000000000000{device_num_to_URI(hex(points.list[point - 1])[2:])}"
+                              "device"] == to_onos_device(to_hex(points.list[point - 1])) # f"of:00000000000000{device_num_to_URI(hex(points.list[point - 1])[2:])}"
                           and points.list[point - 1] in points.list):
                         portIn = link["src"]["port"]
                         intent["ingressPoint"]["port"] = portIn
@@ -141,7 +144,7 @@ def make_intent(points, hosts, links, src_host, dst_host):
                         if int(dst_host) % 2 == 0:
                             intent["egressPoint"]["port"] = "2"
                     elif (link["dst"][
-                              "device"] == f"of:00000000000000{device_num_to_URI(hex(points.list[point + 1])[2:])}"
+                              "device"] == to_onos_device(to_hex(points.list[point + 1])) # f"of:00000000000000{device_num_to_URI(hex(points.list[point + 1])[2:])}"
                           and points.list[point + 1] in points.list):
                         portOut = link["src"]["port"]
                         intent["egressPoint"]["port"] = portOut
@@ -273,21 +276,21 @@ def get_receivers(traffic):
     return list(set(receivers))
 
 
-def get_senders(traffic):
-    senders = []
-    for t in traffic:
-        for n in t[1]:
-            senders.append(n[0])
-    return list(set(senders))
+# def get_senders(traffic):
+#     senders = []
+#     for t in traffic:
+#         for n in t[1]:
+#             senders.append(n[0])
+#     return list(set(senders))
 
 
-def get_src_dst_map(traffic):
-    src_dst_map = {}
-    for pair in traffic[0][1]:
-        if pair[0] not in src_dst_map:
-            src_dst_map[pair[0]] = []
-        src_dst_map[pair[0]].append(pair[1])
-    return src_dst_map
+# def get_src_dst_map(traffic):
+#     src_dst_map = {}
+#     for pair in traffic[0][1]:
+#         if pair[0] not in src_dst_map:
+#             src_dst_map[pair[0]] = []
+#         src_dst_map[pair[0]].append(pair[1])
+#     return src_dst_map
 
 
 def go_dijkstra(graph: dijkstra.Graph, start: int) -> list:
@@ -351,8 +354,8 @@ def get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, hos
     hosts_pairs_only = traffic[0][1]
     src_dst_switch_map = {}
     for pair in hosts_pairs_only:
-        # src_switch = define_switch_on_host(int(pair[0]))
-        # dst_switch = define_switch_on_host(int(pair[1]))
+        #src_switch = define_switch_on_host(int(pair[0]))
+        #dst_switch = define_switch_on_host(int(pair[1]))
         src_switch = host_switch_conn[int(pair[0])]
         dst_switch = host_switch_conn[int(pair[1])]
         # if reachability_matrix[src_switch][dst_switch] != 1:
@@ -457,11 +460,16 @@ if __name__ == '__main__':
                         ['10', '5'], ['10', '7'], ['10', '9']]]]
     # traffic = [['udp', [['2', '3'], ['3', '2']]]]
     t = remove_duplicates(traffic[0][1])
-    switch_start_pairs = get_switch_start_pairs(t)
+    host_switch_conn = {}
+    with open('/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts.txt', "r") as f:
+        for line in f.readlines():
+            host, switch = map(int, line.strip().split(", "))
+            host_switch_conn[host] = switch
+    switch_start_pairs = get_switch_start_pairs(t, host_switch_conn)
     # switch_start_pairs = get_switch_start_pairs(traffic[0][1])
     # print(switch_start_pairs)
 
-    src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic)
+    src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn)
     switches_num = 20
     reachability_matrix = [[0] * switches_num for x in range(switches_num)]
     intents = get_intents_to_send(graph, hosts_list, links, src_dst_switch_map, switch_start_pairs)
