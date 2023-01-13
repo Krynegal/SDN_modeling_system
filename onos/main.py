@@ -1,25 +1,17 @@
 import sys
 from copy import deepcopy
-
 import requests
 import requests as req
 import json
-
 import dijkstra
 import matrix
-
-
-def get_ip():
-    return "172.17.0.2"
-
 
 USER = ("onos", "rocks")
 
 
 def get_links():
     try:
-        IP = '172.17.0.2'
-        res = req.get(f"http://{IP}:8181/onos/v1/links", auth=USER)
+        res = req.get(f"http://172.17.0.2:8181/onos/v1/links", auth=USER)
         links = res.json()["links"]
         with open("../jsonFiles/topology_links.json", "w") as f:
             f.write(json.dumps(res.json(), indent=4))
@@ -58,17 +50,11 @@ def get_host_mac_map(hosts):
     return h
 
 
-def device_num_to_URI(dev_num):
-    if len(dev_num) == 1:
-        dev_num = '0' + dev_num
-    return dev_num
-
-
 def to_onos_device(dev_num: str):
     return "of:" + dev_num.zfill(16)
 
 
-def to_hex(num):
+def to_hex(num: int):
     return f'{num:x}'
 
 
@@ -187,11 +173,11 @@ def post_intents(data):
 
 
 def post_flows(data):
-    res = req.post(f"http://{IP}:8181/onos/v1/flows", json=data, auth=USER)
+    res = req.post(f"http://172.17.0.2:8181/onos/v1/flows", json=data, auth=USER)
     if res.status_code == 200:
         print("flows were successfully send")
     else:
-        print("some problem occured while sending flows")
+        print("some problem occurred while sending flows")
 
 
 def get_hosts():
@@ -214,25 +200,11 @@ def hosts_func(hosts):
     return h
 
 
-def read_custom_traffic():
-    res = []
-    core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
-    custom_t_file_path = core_path + 'custom_traffic.txt'
-    with open(f"{custom_t_file_path}", "r") as f:
-        for line in f.readlines():
-            split_line = line.strip("\n").split(";")
-            protocol = split_line[0]
-            pairs = [x.strip().split(",") for x in split_line[1:]]
-            res.append([protocol, pairs])
-    print('custom traffic:', res)
-    return res
-
-
 def read_all_to_all(hosts: dict):
-    l = len(hosts)
+    length = len(hosts)
     d = {}
-    for i in range(1, l + 1):
-        d[str(i)] = [str(j) for j in range(1, l + 1) if j != i]
+    for i in range(1, length + 1):
+        d[str(i)] = [str(j) for j in range(1, length + 1) if j != i]
     return d
 
 
@@ -247,11 +219,13 @@ def read_all_to_all(hosts: dict):
 
 def go_dijkstra(graph: dijkstra.Graph, start: int) -> list:
     graph.print_adj_mat()
-    start = hex(start)[2:]
-    if len(start) < 2:
-        start = '0' + start
+    # start = hex(start)[2:]
+    # if len(start) < 2:
+    #     start = '0' + start
+    start = to_onos_device(to_hex(start))
     print(f'start switch: {start}')
-    start_node = graph.get_node_by_data(f"of:00000000000000{start}")
+    # start_node = graph.get_node_by_data(f"of:00000000000000{start}")
+    start_node = graph.get_node_by_data(start)
     print([(weight, [n.data for n in node]) for (weight, node) in graph.dijkstra(start_node)])
     path_list = graph.dijkstra(start_node)
     return path_list
@@ -351,8 +325,6 @@ def remove_duplicates(all_traffic):
 
 
 if __name__ == '__main__':
-    IP = get_ip()
-
     links = get_links()
 
     devices = dijkstra.get_devices_list(links)
@@ -362,10 +334,10 @@ if __name__ == '__main__':
 
     graph = dijkstra.Graph.create_from_nodes(nodes)
 
-    #################### No weights ######################
+    # -------------------  No weights   -------------------------
     # Common adjacency matrix that tells about the switches connections
     graph.adj_mat = matrix.get_matrix(links, len(devices))
-    ##################### Weights ########################
+    # ---------------------- Weights  -----------------------
     # graph.adj_mat = input_data.main()
 
     pair_intents = []

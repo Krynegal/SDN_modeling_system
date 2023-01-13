@@ -1,6 +1,6 @@
 import time
 
-from onos.main import get_intents_to_send, post_intents, read_custom_traffic, get_links, \
+from onos.main import get_intents_to_send, post_intents, get_links, \
     get_hosts, hosts_func, read_all_to_all
 from onos.stats import get_spm, get_stats
 from onos.dijkstra import get_dijkstra_graph
