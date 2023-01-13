@@ -101,11 +101,6 @@ class MyTopo(Topo):
                     self.addLink(switches[row], switches[col], bw=1000)
 
 
-def parse_p_args(input):
-    rate, size, time_, protocol = input[1], input[2], input[3], input[4]
-    return rate, size, time_, protocol
-
-
 def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteLogs.sh')
     os.system(f'cd {itg_path} && ./deleteDat.sh')
