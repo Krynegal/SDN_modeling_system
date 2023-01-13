@@ -24,26 +24,25 @@ sys.path.append(conf_path)
 print(sys.path)
 
 from core.read_scenario import get_yaml_content
-from utils import host_addr_map, get_receivers, get_senders, fwd_activate
-from scripters import generate_custom, generate_all_to_all, read_custom_traffic
-from runners import run_all, run_custom, run_stats_processing
-from onos.main import get_intents_to_send, post_intents, get_links, \
-    get_hosts, hosts_func, read_all_to_all, get_host_switch_map, get_switch_start_pairs, \
-    get_src_dst_switch_map_reachability_matrix, remove_duplicates
+from utils import host_addr_map, get_receivers, get_senders
+from scripters import generate_custom, read_custom_traffic
+from runners import run_custom, run_stats_processing
+from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_switch_map_reachability_matrix, \
+    remove_duplicates
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
+from onos.api import post_intents, get_links, get_hosts, fwd_activate
 
 
-
-class Node():
+class Node:
     def __init__(self, data, indexloc=None):
         self.data = data
         self.index = indexloc
 
 
-class Graph():
+class Graph:
     @classmethod
-    def create_from_nodes(self, nodes):
+    def create_from_nodes(cls, nodes):
         return Graph(len(nodes), len(nodes), nodes)
 
     def __init__(self, row, col, nodes=None):
@@ -142,7 +141,6 @@ switches_num = 20
 while True:
     print('input "m" to run mininet console')
     print('input "c" to run custom')
-    print('input "g <rate> <size> <time (ms)> <protocol>" to generate scripts')
     input_line = input().split()
     if len(input_line) == 1 and input_line[0] == 'm':
         CLI(net)
@@ -192,7 +190,8 @@ while True:
             # ... ] из трафика
             switch_start_pairs = get_switch_start_pairs(host_pairs_only, host_switch_conn)
             print(switch_start_pairs)
-            src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn)
+            src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic,
+                                                                            host_switch_conn)
             if len(src_dst_switch_map) != 0:
                 if id != 1:
                     # обновляем матрицу весов графа
@@ -227,19 +226,6 @@ while True:
         print("here")
         for i in range(1, len(hosts) + 1):
             hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')
-
-    elif input_line[0] == 'g':
-        delete_old_files()
-        if len(input_line) == 1:
-            generate_all_to_all(host_addr_map)
-            run_all(hosts)
-        elif len(input_line) == 5:
-            rate, size, time, protocol = parse_p_args(input_line)
-            generate_all_to_all(host_addr_map, rate, size, time, protocol)
-            run_all(hosts)
-        else:
-            print('some args were skipped')
-            continue
     elif input_line[0] == 'k':
         for i in range(1, len(hosts) + 1):
             hosts[i - 1].cmd('kill -9 $(pidof ITGRecv)')

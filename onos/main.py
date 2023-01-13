@@ -1,25 +1,7 @@
-import sys
 from copy import deepcopy
-import requests
-import requests as req
-import json
+import api
 import dijkstra
 import matrix
-
-USER = ("onos", "rocks")
-
-
-def get_links():
-    try:
-        res = req.get(f"http://172.17.0.2:8181/onos/v1/links", auth=USER)
-        links = res.json()["links"]
-        with open("../jsonFiles/topology_links.json", "w") as f:
-            f.write(json.dumps(res.json(), indent=4))
-        # print(json.dumps(res.json(), indent=4))
-        return links
-    except requests.exceptions.ConnectionError:
-        print("Oops. Seems like dns lookup failed..")
-        sys.exit()
 
 
 class Path:
@@ -156,43 +138,6 @@ def reverse_intent(intent_old):
     return int_new
 
 
-def post_intents(data):
-    intents_num = len(data["intents"])
-    successful_requests = 0
-    for intent in data["intents"]:
-        res = req.post(f"http://172.17.0.2:8181/onos/v1/intents", json=intent, auth=USER)
-        if res.status_code == 201:
-            successful_requests += 1
-        else:
-            print("NOT SUCCESSFUL REQUEST")
-            print(intent)
-    if successful_requests != intents_num:
-        print(f"Oops. Only {successful_requests}/{intents_num} were successfully sent")
-        return
-    print(f"{successful_requests}/{intents_num} were successfully send")
-
-
-def post_flows(data):
-    res = req.post(f"http://172.17.0.2:8181/onos/v1/flows", json=data, auth=USER)
-    if res.status_code == 200:
-        print("flows were successfully send")
-    else:
-        print("some problem occurred while sending flows")
-
-
-def get_hosts():
-    try:
-        res = req.get(f"http://172.17.0.2:8181/onos/v1/hosts", auth=USER)
-        hosts = res.json()["hosts"]
-        with open("../jsonFiles/topology_hosts.json", "w") as f:
-            f.write(json.dumps(res.json(), indent=4))
-        # print(json.dumps(res.json(), indent=4))
-        return hosts
-    except req.exceptions.ConnectionError:
-        print("Oops. Seems like dns lookup failed..")
-        sys.exit()
-
-
 def hosts_func(hosts):
     h = {}
     for host in hosts:
@@ -324,8 +269,8 @@ def remove_duplicates(all_traffic):
     return res
 
 
-if __name__ == '__main__':
-    links = get_links()
+def main():
+    links = api.get_links()
 
     devices = dijkstra.get_devices_list(links)
 
@@ -341,7 +286,7 @@ if __name__ == '__main__':
     # graph.adj_mat = input_data.main()
 
     pair_intents = []
-    hosts_list = get_hosts()
+    hosts_list = api.get_hosts()
     # h = hosts_func(hosts_list)
     # hsm = get_host_switch_map(hosts_list)
 
@@ -365,7 +310,8 @@ if __name__ == '__main__':
     #                     '5': ['2', '4', '6', '8', '10'], '6': ['1', '3', '5', '7', '9'],
     #                     '7': ['2', '4', '6', '8', '10'], '8': ['1', '3', '5', '7', '9'],
     #                     '9': ['2', '4', '6', '8', '10'], '10': ['1', '3', '5', '7', '9']}
-    reachability_matrix = [[0] * 20 for x in range(20)]
+    switches_num = 20
+    reachability_matrix = [[0] * switches_num for _ in range(switches_num)]
     traffic = [['udp', [['1', '2'], ['1', '4'], ['1', '6'], ['1', '8'], ['1', '10'], ['2', '1'], ['2', '3'], ['2', '5'],
                         ['2', '7'], ['2', '9'], ['3', '2'], ['3', '4'], ['3', '6'], ['3', '8'], ['3', '10'], ['4', '1'],
                         ['4', '3'], ['4', '5'], ['4', '7'], ['4', '9'], ['5', '2'], ['5', '4'], ['5', '6'], ['5', '8'],
@@ -385,7 +331,9 @@ if __name__ == '__main__':
     # print(switch_start_pairs)
 
     src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn)
-    switches_num = 20
-    reachability_matrix = [[0] * switches_num for x in range(switches_num)]
     intents = get_intents_to_send(graph, hosts_list, links, src_dst_switch_map, switch_start_pairs)
     # post_intents(intents)
+
+
+if __name__ == '__main__':
+    main()
