@@ -116,6 +116,17 @@ topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
 
+def weight_func(x):
+    return 1000 / (1000 - x)
+
+
+def find_max_flow_duration(read_data):
+    max_dur = 0
+    for s in read_data["scenario"]:
+        max_dur = max(s["script"]["duration"], max_dur)
+    return max_dur
+
+
 def main():
     net = Mininet()
     c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
@@ -133,6 +144,7 @@ def main():
     hosts = []
     for h_key in host_addr_map.keys():
         hosts.append(net.get(f'h{h_key}'))
+    # TODO: количество свитчей не должно быть жестко прописано
     switches_num = 20
 
     while True:
@@ -159,6 +171,7 @@ def main():
             threads = []
             all_receivers = []
             read_data = get_yaml_content()
+            max_flow_duration = find_max_flow_duration(read_data)
             for action in read_data['scenario']:
                 # получаем информацию об очередном потоке
                 id = action['script']['id']
@@ -201,7 +214,8 @@ def main():
 
                 if id == 1:
                     time.sleep(20)
-                    stat_thread = Thread(name="stats thread", target=run_stats_processing, args=(links, switches_num,))
+                    stat_thread = Thread(name="stats thread", target=run_stats_processing,
+                                         args=(links, switches_num, max_flow_duration, weight_func,))
                     stat_thread.start()
                     threads.append(stat_thread)
 

@@ -1,5 +1,6 @@
 import time
 from onos.stats import get_spm, get_stats
+import numpy as np
 
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
@@ -29,26 +30,22 @@ def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_rec
     time.sleep(duration)
 
 
-def run_stats_processing(links, num_devices: int):
+def write_matrix(f, matrix):
+    for line in matrix:
+        np.savetxt(f, line, fmt='%7.2f,', newline=' ')
+        f.write("\n")
+    f.write("\n")
+
+
+def run_stats_processing(links, num_devices: int, duration, weight_func):
+    matrix = np.full((num_devices, num_devices), -1)
     src_ports_map = get_spm(links)
-    for t in range(1, 31):
+    for t in range(2, duration+1, 2):
         time.sleep(2)
-        matrix = get_stats(src_ports_map, num_devices)
+        matrix = get_stats(matrix, src_ports_map)
+        weight_matrix = np.where(matrix == -1, 0, weight_func(matrix))
         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
-            for i in range(len(matrix)):
-                for j in range(len(matrix[i])):
-                    f.write('%7.2f, ' % (calc_new_weight(matrix[i][j])))
-                f.write('\n')
+            write_matrix(f, weight_matrix)
         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
-            f.write(f"================================  {int(t) * 2} seconds  ==================================\n")
-            for i in range(len(matrix)):
-                for j in range(len(matrix[i])):
-                    f.write('%7.2f, ' % (calc_new_weight(matrix[i][j])))
-                f.write('\n')
-            f.write('\n\n')
-
-
-def calc_new_weight(matrix_el):
-    if matrix_el == -1:
-        return 0
-    return 1000 / (1000 - matrix_el)
+            f.write(f"=======================================  {t} seconds  ========================================\n")
+            write_matrix(f, weight_matrix)

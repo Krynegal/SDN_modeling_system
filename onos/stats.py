@@ -3,17 +3,16 @@ import os
 import requests as req
 import sys
 from urllib import parse
+import numpy as np
 
 USER = ("onos", "rocks")
 
 
-def get_stats(spm: {}, devices_number: int):
-    matrix = [[-1] * devices_number for _ in range(devices_number)]
+def get_stats(matrix, spm: {}):
     try:
-        IP = '172.17.0.2'
         for device in spm:
             for port in spm[device]:
-                res = req.get(f"http://{IP}:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
+                res = req.get(f"http://172.17.0.2:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
                 # print(device, port)
                 bytes = 0
                 if len(res.json()["loads"]) > 0:
@@ -37,6 +36,7 @@ def get_stats(spm: {}, devices_number: int):
 def update_matrix(matrix, dev1, dev2, bytes):
     dev1 = int(dev1[3:], 16) - 1
     dev2 = int(dev2[3:], 16) - 1
+    # Переводим байты в мегабайты
     matrix[dev1][dev2] = round(bytes / 125_000, 2)
     matrix[dev2][dev1] = matrix[dev1][dev2]
 
@@ -56,8 +56,8 @@ def get_spm(links):
 
 
 def read_weights_matrix():
-    os.system(
-        'cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt /home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt')
+    os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt '
+              '/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt')
     with open("/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt", "r") as f:
         file = f.readlines()
     weights_matrix = []
