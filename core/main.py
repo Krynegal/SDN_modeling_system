@@ -91,14 +91,14 @@ class MyTopo(Topo):
             switches.append(self.addSwitch('s' + graph.nodes[i].data, protocols="OpenFlow13"))
         # создаем все хосты и коннектим их с их свитчами
         for host_num in host_switch_conn:
-            host = self.addHost(f'h{host_num}', ip=f'192.168.0.{host_num}')
-            self.addLink(host, switches[host_switch_conn[host_num] - 1], bw=1000)
+            host = self.addHost(f'h{host_num}', ip=f'192.168.{host_num // 255}.{host_num % 255 + (host_num // 255)}')
+            self.addLink(host, switches[host_switch_conn[host_num] - 1])
 
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
-                    self.addLink(switches[row], switches[col], bw=1000)
+                    self.addLink(switches[row], switches[col])
 
 
 def delete_old_files():
@@ -111,7 +111,7 @@ core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 topo_file = 'topologies/fat_tree.txt'
-switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
+switch_hosts_conn_file = 'topologies/fat_tree_hosts_test.txt'
 topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
@@ -127,7 +127,36 @@ def find_max_flow_duration(read_data):
     return max_dur
 
 
+def gen_host_switch_pair():
+    h_num = 1
+    with open(f"{core_path}/topologies/fat_tree_hosts_test.txt", "w") as f:
+        for s in range(1, 8 + 1):
+            for h in range(1, 48 + 1):
+                f.write(f'{h_num}, {s}\n')
+                h_num += 1
+
+
+def ping(host, addresses):
+    for addr in addresses:
+        host.cmd(f'ping {addr} -c 1 -q')
+
+
+def pingall(hosts, addresses):
+    threads = []
+    for i in range(len(hosts)):
+        host = hosts[i]
+        thread = Thread(target=ping, args=(host, addresses))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        print(f"thread {thread} is STOPPED")
+        thread.join()
+
+
 def main():
+    gen_host_switch_pair()
+
     net = Mininet()
     c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
     topo = MyTopo()
@@ -136,16 +165,23 @@ def main():
     net.build()
     net.start()
     time.sleep(5)
-    net.pingAll()
+    # net.pingAll()
 
-    fwd_activate(False)
-
-    host_addr_map = get_host_addr_map(topo)
+    print(topo.g.node)
+    topo_nodes = topo.g.node
+    host_addr_map = get_host_addr_map(topo_nodes)
     hosts = []
     for h_key in host_addr_map.keys():
         hosts.append(net.get(f'h{h_key}'))
-    # TODO: количество свитчей не должно быть жестко прописано
-    switches_num = 20
+    switches_num = 0
+    for node in topo_nodes:
+        if 'isSwitch' in topo_nodes[node] and topo_nodes[node]["isSwitch"]:
+            switches_num += 1
+    print(f'switchesNum: {switches_num}\n')
+
+    print(host_addr_map.values())
+    pingall(hosts, host_addr_map.values())
+    fwd_activate(False)
 
     while True:
         print('input "m" to run mininet console')
