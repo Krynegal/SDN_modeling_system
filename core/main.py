@@ -131,7 +131,7 @@ def gen_host_switch_pair():
     h_num = 1
     with open(f"{core_path}/topologies/fat_tree_hosts_test.txt", "w") as f:
         for s in range(1, 8 + 1):
-            for h in range(1, 48 + 1):
+            for h in range(1, 24 + 1):
                 f.write(f'{h_num}, {s}\n')
                 h_num += 1
 
@@ -232,7 +232,7 @@ def main():
                 # определяем свитчи, которые будут использоваться в качестве стартовых нод для пар [<src, dst>,
                 # ... ] из трафика
                 switch_start_pairs = get_switch_start_pairs(host_pairs_only, host_switch_conn)
-                print(switch_start_pairs)
+                print(f'switch_start_pairs {switch_start_pairs}')
                 src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic,
                                                                                 host_switch_conn)
                 if len(src_dst_switch_map) != 0:

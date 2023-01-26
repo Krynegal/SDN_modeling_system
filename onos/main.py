@@ -148,7 +148,7 @@ def get_routes_for_each_switch_target(switch_targets: list, paths: list):
             num_nodes = [int(_.data[3:], 16) for _ in nodes]
             points.list = num_nodes
             routes.append(points)
-            print(points.list)
+            print(f'points.list {points.list}')
     return routes
 
 
@@ -161,7 +161,7 @@ def get_intents_to_send(graph: dijkstra.Graph, hosts_info, links, src_dst_switch
         switch_targets = src_dst_switch_map[src_switch]
         paths = go_dijkstra(graph, start_switch_node)
         routes = get_routes_for_each_switch_target(switch_targets, paths)
-        print(routes)
+        print(f'routes: {routes}')
         for start_switch in switch_start_pairs:
             for pair in switch_start_pairs[start_switch]:
                 for route in routes:
@@ -277,7 +277,7 @@ def main():
 
     src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn)
     intents = get_intents_to_send(graph, hosts_info, links, src_dst_switch_map, switch_start_pairs)
-    api.post_intents(intents)
+    #api.post_intents(intents)
 
 
 if __name__ == '__main__':
