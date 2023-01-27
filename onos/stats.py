@@ -18,7 +18,7 @@ def get_stats(matrix, spm: {}):
                 if len(res.json()["loads"]) > 0:
                     bytes += res.json()["loads"][0]["rate"]
                 else:
-                    print(res.json()["loads"])
+                    print(f'res.json()["loads"] is empty')
                 if len(res.json()["loads"]) > 1:
                     bytes += res.json()["loads"][1]["rate"]
 
@@ -50,6 +50,7 @@ def get_spm(links):
                 link["src"]["device"] in src_ports_map and link["src"]["port"] not in src_ports_map[
             link["src"]["device"]]):
             src_ports_map[link["dst"]["device"]].extend(link["dst"]["port"])
+    print('src_ports_map:')
     for k in src_ports_map:
         print(f'{k}: {src_ports_map[k]}')
     return src_ports_map

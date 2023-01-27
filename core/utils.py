@@ -5,12 +5,11 @@ scripts_path = core_path + 'scripts/'
 USER = ("onos", "rocks")
 
 
-def get_host_addr_map(topo):
-    g_nodes = topo.g.node
+def get_host_addr_map(topo_modes):
     m = {}
-    for node in g_nodes:
-        if 'ip' in g_nodes[node]:
-            m[node[1:]] = g_nodes[node]['ip']
+    for node in topo_modes:
+        if 'ip' in topo_modes[node]:
+            m[node[1:]] = topo_modes[node]['ip']
     print(f'host_addr_map: {m}\n')
     return m
 
