@@ -28,7 +28,7 @@ from utils import get_host_addr_map, get_receivers, get_senders
 from scripters import generate_custom, read_custom_traffic
 from runners import run_custom, run_stats_processing
 from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_switch_map_reachability_matrix, \
-    remove_duplicates, get_hosts_info
+    remove_duplicates, get_hosts_info, to_onos_device, to_hex
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
 from onos.api import post_intents, get_links, get_hosts, fwd_activate
@@ -154,6 +154,27 @@ def pingall(hosts, addresses):
         thread.join()
 
 
+def get_hosts_info_2(net):
+    hosts_info = {}
+    with open(f"/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts_test.txt", "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            h, s = line.strip().split(', ')
+            net_host = net.get(f'h{h}')
+            res = net_host.cmd("ifconfig | awk 'FNR==2||FNR==4{print $2}'")
+            ip, mac = [x.strip() for x in res.split("\n")][:2]
+            port = str(int(h) % 25 + (int(h) // 25))
+            switch = int(s)
+            onos_switch = to_onos_device(to_hex(switch))
+            hosts_info[h] = {
+                "mac": mac,  # string
+                "port": port,  # string
+                "switch": switch,  # int, example: 1..192
+                "onos_switch": onos_switch,  # string of:00000000000000a
+            }
+    return hosts_info
+
+
 def main():
     gen_host_switch_pair()
 
@@ -165,7 +186,6 @@ def main():
     net.build()
     net.start()
     time.sleep(5)
-    # net.pingAll()
 
     print(topo.g.node)
     topo_nodes = topo.g.node
@@ -180,8 +200,15 @@ def main():
     print(f'switchesNum: {switches_num}\n')
 
     print(host_addr_map.values())
-    pingall(hosts, host_addr_map.values())
-    fwd_activate(False)
+
+    # net.pingAll()
+    # hosts_list = get_hosts()
+    # hosts_info = get_hosts_info(hosts_list)
+    # print(f"hosts_info: {hosts_info}")
+
+    print(f"get_hosts_info_2(net): {get_hosts_info_2(net)}")
+    # pingall(hosts, host_addr_map.values())
+    # fwd_activate(False)
 
     while True:
         print('input "m" to run mininet console')
@@ -198,8 +225,10 @@ def main():
             links = get_links()
             graph = get_dijkstra_graph(links)
 
-            hosts_list = get_hosts()
-            hosts_info = get_hosts_info(hosts_list)
+            # hosts_list = get_hosts()
+            # hosts_info = get_hosts_info(hosts_list)
+
+            hosts_info = get_hosts_info_2(net)
 
             # матрица достижимости для свитчей
             reachability_matrix = [[0] * switches_num for _ in range(switches_num)]
@@ -249,7 +278,7 @@ def main():
                 generate_custom(id, host_addr_map, traffic, duration)
 
                 if id == 1:
-                    time.sleep(20)
+                    time.sleep(40)
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
                                          args=(links, switches_num, max_flow_duration, weight_func,))
                     stat_thread.start()

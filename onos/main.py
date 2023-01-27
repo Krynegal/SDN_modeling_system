@@ -277,7 +277,7 @@ def main():
 
     src_dst_switch_map = get_src_dst_switch_map_reachability_matrix(reachability_matrix, traffic, host_switch_conn)
     intents = get_intents_to_send(graph, hosts_info, links, src_dst_switch_map, switch_start_pairs)
-    #api.post_intents(intents)
+    # api.post_intents(intents)
 
 
 if __name__ == '__main__':

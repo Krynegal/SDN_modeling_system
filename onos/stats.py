@@ -19,6 +19,8 @@ def get_stats(matrix, spm: {}):
                     bytes += res.json()["loads"][0]["rate"]
                 else:
                     print(f'res.json()["loads"] is empty')
+                    print(f'device: {device}, port: {port}')
+                    print()
                 if len(res.json()["loads"]) > 1:
                     bytes += res.json()["loads"][1]["rate"]
 
@@ -30,7 +32,6 @@ def get_stats(matrix, spm: {}):
         return matrix
     except req.exceptions.ConnectionError:
         print("Oops. Seems like dns lookup failed..")
-        sys.exit()
 
 
 def update_matrix(matrix, dev1, dev2, bytes):
