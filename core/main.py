@@ -111,7 +111,7 @@ core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 topo_file = 'topologies/fat_tree.txt'
-switch_hosts_conn_file = 'topologies/fat_tree_hosts_test.txt'
+switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
 topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
@@ -134,7 +134,13 @@ def gen_host_switch_pair():
             for h in range(1, 24 + 1):
                 f.write(f'{h_num}, {s}\n')
                 h_num += 1
-
+# def gen_host_switch_pair():
+#     h_num = 1
+#     with open(f"{core_path}/topologies/fat_tree_hosts_100.txt", "w") as f:
+#         for s in range(1, 40 + 1):
+#             for h in range(1, 5 + 1):
+#                 f.write(f'{h_num}, {s}\n')
+#                 h_num += 1
 
 def ping(host, addresses):
     for addr in addresses:
@@ -156,14 +162,15 @@ def pingall(hosts, addresses):
 
 def get_hosts_info_2(net):
     hosts_info = {}
-    with open(f"/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts_test.txt", "r") as f:
+    with open(f"/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts.txt", "r") as f:
         lines = f.readlines()
         for line in lines:
             h, s = line.strip().split(', ')
             net_host = net.get(f'h{h}')
             res = net_host.cmd("ifconfig | awk 'FNR==2||FNR==4{print $2}'")
             ip, mac = [x.strip() for x in res.split("\n")][:2]
-            port = str(int(h) % 25 + (int(h) // 25))
+            max_used_port = 2
+            port = str(int(h) % max_used_port if int(h) % max_used_port != 0 else max_used_port)
             switch = int(s)
             onos_switch = to_onos_device(to_hex(switch))
             hosts_info[h] = {
@@ -250,7 +257,7 @@ def main():
                 traffic = read_custom_traffic(custom_t_file_path)
 
                 host_pairs_only = remove_duplicates(traffic[0][1])
-
+                print("here")
                 # TODO: упаковать в функцию
                 # мапа хост : свитч
                 host_switch_conn = {}
@@ -258,6 +265,7 @@ def main():
                     for line in f.readlines():
                         host, switch = map(int, line.strip().split(", "))
                         host_switch_conn[host] = switch
+                print("ok")
                 # определяем свитчи, которые будут использоваться в качестве стартовых нод для пар [<src, dst>,
                 # ... ] из трафика
                 switch_start_pairs = get_switch_start_pairs(host_pairs_only, host_switch_conn)
@@ -278,7 +286,7 @@ def main():
                 generate_custom(id, host_addr_map, traffic, duration)
 
                 if id == 1:
-                    time.sleep(40)
+                    time.sleep(20)
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
                                          args=(links, switches_num, max_flow_duration, weight_func,))
                     stat_thread.start()

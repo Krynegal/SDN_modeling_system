@@ -1,8 +1,8 @@
 {
     "hosts": [
         {
-            "id": "FA:61:7C:31:AA:33/None",
-            "mac": "FA:61:7C:31:AA:33",
+            "id": "42:36:97:12:F9:35/None",
+            "mac": "42:36:97:12:F9:35",
             "vlan": "None",
             "innerVlan": "None",
             "outerTpid": "0x0000",
@@ -19,62 +19,8 @@
             ]
         },
         {
-            "id": "2E:7F:CB:91:99:1B/None",
-            "mac": "2E:7F:CB:91:99:1B",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.1"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000001",
-                    "port": "1"
-                }
-            ]
-        },
-        {
-            "id": "32:37:43:D5:D7:E6/None",
-            "mac": "32:37:43:D5:D7:E6",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.11"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000006",
-                    "port": "1"
-                }
-            ]
-        },
-        {
-            "id": "12:70:50:97:1F:DD/None",
-            "mac": "12:70:50:97:1F:DD",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.3"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000002",
-                    "port": "1"
-                }
-            ]
-        },
-        {
-            "id": "32:6A:47:1D:8D:5C/None",
-            "mac": "32:6A:47:1D:8D:5C",
+            "id": "FA:D5:E3:D8:89:A6/None",
+            "mac": "FA:D5:E3:D8:89:A6",
             "vlan": "None",
             "innerVlan": "None",
             "outerTpid": "0x0000",
@@ -91,152 +37,8 @@
             ]
         },
         {
-            "id": "F2:C4:AC:FD:39:42/None",
-            "mac": "F2:C4:AC:FD:39:42",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.2"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000001",
-                    "port": "2"
-                }
-            ]
-        },
-        {
-            "id": "82:FE:A5:27:CC:D3/None",
-            "mac": "82:FE:A5:27:CC:D3",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.16"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000008",
-                    "port": "2"
-                }
-            ]
-        },
-        {
-            "id": "C6:51:9D:E8:F8:7F/None",
-            "mac": "C6:51:9D:E8:F8:7F",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.14"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000007",
-                    "port": "2"
-                }
-            ]
-        },
-        {
-            "id": "DA:71:02:E2:0E:96/None",
-            "mac": "DA:71:02:E2:0E:96",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.7"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000004",
-                    "port": "1"
-                }
-            ]
-        },
-        {
-            "id": "DA:47:FC:FC:25:57/None",
-            "mac": "DA:47:FC:FC:25:57",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.6"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000003",
-                    "port": "2"
-                }
-            ]
-        },
-        {
-            "id": "82:F4:B0:2D:10:CE/None",
-            "mac": "82:F4:B0:2D:10:CE",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.4"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000002",
-                    "port": "2"
-                }
-            ]
-        },
-        {
-            "id": "9E:EA:28:9F:7B:D0/None",
-            "mac": "9E:EA:28:9F:7B:D0",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.9"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000005",
-                    "port": "1"
-                }
-            ]
-        },
-        {
-            "id": "4A:A8:49:E5:81:24/None",
-            "mac": "4A:A8:49:E5:81:24",
-            "vlan": "None",
-            "innerVlan": "None",
-            "outerTpid": "0x0000",
-            "configured": false,
-            "suspended": false,
-            "ipAddresses": [
-                "192.168.0.5"
-            ],
-            "locations": [
-                {
-                    "elementId": "of:0000000000000003",
-                    "port": "1"
-                }
-            ]
-        },
-        {
-            "id": "62:B7:76:1C:28:CB/None",
-            "mac": "62:B7:76:1C:28:CB",
+            "id": "26:F8:85:FF:40:45/None",
+            "mac": "26:F8:85:FF:40:45",
             "vlan": "None",
             "innerVlan": "None",
             "outerTpid": "0x0000",
@@ -253,8 +55,44 @@
             ]
         },
         {
-            "id": "6A:22:D6:3B:CD:6E/None",
-            "mac": "6A:22:D6:3B:CD:6E",
+            "id": "02:40:A8:2F:7E:A9/None",
+            "mac": "02:40:A8:2F:7E:A9",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.3"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000002",
+                    "port": "1"
+                }
+            ]
+        },
+        {
+            "id": "8A:E8:43:C7:F9:20/None",
+            "mac": "8A:E8:43:C7:F9:20",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.1"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000001",
+                    "port": "1"
+                }
+            ]
+        },
+        {
+            "id": "42:97:F4:06:5B:7E/None",
+            "mac": "42:97:F4:06:5B:7E",
             "vlan": "None",
             "innerVlan": "None",
             "outerTpid": "0x0000",
@@ -271,8 +109,80 @@
             ]
         },
         {
-            "id": "62:A1:5B:C1:4C:AC/None",
-            "mac": "62:A1:5B:C1:4C:AC",
+            "id": "72:AC:06:73:5C:6B/None",
+            "mac": "72:AC:06:73:5C:6B",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.16"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000008",
+                    "port": "2"
+                }
+            ]
+        },
+        {
+            "id": "CA:BF:6D:ED:1D:DC/None",
+            "mac": "CA:BF:6D:ED:1D:DC",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.9"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000005",
+                    "port": "1"
+                }
+            ]
+        },
+        {
+            "id": "4E:05:99:78:05:3B/None",
+            "mac": "4E:05:99:78:05:3B",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.4"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000002",
+                    "port": "2"
+                }
+            ]
+        },
+        {
+            "id": "12:B8:1F:9F:07:EF/None",
+            "mac": "12:B8:1F:9F:07:EF",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.11"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000006",
+                    "port": "1"
+                }
+            ]
+        },
+        {
+            "id": "66:6C:7C:72:E4:6C/None",
+            "mac": "66:6C:7C:72:E4:6C",
             "vlan": "None",
             "innerVlan": "None",
             "outerTpid": "0x0000",
@@ -284,6 +194,96 @@
             "locations": [
                 {
                     "elementId": "of:0000000000000005",
+                    "port": "2"
+                }
+            ]
+        },
+        {
+            "id": "4A:EB:62:39:0B:47/None",
+            "mac": "4A:EB:62:39:0B:47",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.6"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000003",
+                    "port": "2"
+                }
+            ]
+        },
+        {
+            "id": "16:96:D5:C4:DC:27/None",
+            "mac": "16:96:D5:C4:DC:27",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.5"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000003",
+                    "port": "1"
+                }
+            ]
+        },
+        {
+            "id": "CE:E1:BE:55:27:A0/None",
+            "mac": "CE:E1:BE:55:27:A0",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.14"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000007",
+                    "port": "2"
+                }
+            ]
+        },
+        {
+            "id": "B2:D4:D9:7A:A5:7E/None",
+            "mac": "B2:D4:D9:7A:A5:7E",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.7"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000004",
+                    "port": "1"
+                }
+            ]
+        },
+        {
+            "id": "FA:A8:F9:18:43:19/None",
+            "mac": "FA:A8:F9:18:43:19",
+            "vlan": "None",
+            "innerVlan": "None",
+            "outerTpid": "0x0000",
+            "configured": false,
+            "suspended": false,
+            "ipAddresses": [
+                "192.168.0.2"
+            ],
+            "locations": [
+                {
+                    "elementId": "of:0000000000000001",
                     "port": "2"
                 }
             ]
