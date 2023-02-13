@@ -2,6 +2,7 @@
 import os
 import sys
 import time
+from datetime import datetime
 from threading import Thread
 
 from mininet.net import Mininet
@@ -92,13 +93,13 @@ class MyTopo(Topo):
         # создаем все хосты и коннектим их с их свитчами
         for host_num in host_switch_conn:
             host = self.addHost(f'h{host_num}', ip=f'192.168.{host_num // 255}.{host_num % 255 + (host_num // 255)}')
-            self.addLink(host, switches[host_switch_conn[host_num] - 1])
+            self.addLink(host, switches[host_switch_conn[host_num] - 1], bw=1000)
 
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
-                    self.addLink(switches[row], switches[col])
+                    self.addLink(switches[row], switches[col], bw=1000)
 
 
 def delete_old_files():
@@ -142,27 +143,10 @@ def gen_host_switch_pair():
 #                 f.write(f'{h_num}, {s}\n')
 #                 h_num += 1
 
-def ping(host, addresses):
-    for addr in addresses:
-        host.cmd(f'ping {addr} -c 1 -q')
-
-
-def pingall(hosts, addresses):
-    threads = []
-    for i in range(len(hosts)):
-        host = hosts[i]
-        thread = Thread(target=ping, args=(host, addresses))
-        threads.append(thread)
-        thread.start()
-
-    for thread in threads:
-        print(f"thread {thread} is STOPPED")
-        thread.join()
-
 
 def get_hosts_info_2(net):
     hosts_info = {}
-    with open(f"/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts.txt", "r") as f:
+    with open(f"{topo_path_hosts}", "r") as f:
         lines = f.readlines()
         for line in lines:
             h, s = line.strip().split(', ')
@@ -205,17 +189,7 @@ def main():
         if 'isSwitch' in topo_nodes[node] and topo_nodes[node]["isSwitch"]:
             switches_num += 1
     print(f'switchesNum: {switches_num}\n')
-
     print(host_addr_map.values())
-
-    # net.pingAll()
-    # hosts_list = get_hosts()
-    # hosts_info = get_hosts_info(hosts_list)
-    # print(f"hosts_info: {hosts_info}")
-
-    print(f"get_hosts_info_2(net): {get_hosts_info_2(net)}")
-    # pingall(hosts, host_addr_map.values())
-    # fwd_activate(False)
 
     while True:
         print('input "m" to run mininet console')
@@ -232,10 +206,8 @@ def main():
             links = get_links()
             graph = get_dijkstra_graph(links)
 
-            # hosts_list = get_hosts()
-            # hosts_info = get_hosts_info(hosts_list)
-
             hosts_info = get_hosts_info_2(net)
+            print(f"hosts_info: {hosts_info}")
 
             # матрица достижимости для свитчей
             reachability_matrix = [[0] * switches_num for _ in range(switches_num)]
@@ -290,6 +262,7 @@ def main():
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
                                          args=(links, switches_num, max_flow_duration, weight_func,))
                     stat_thread.start()
+                    print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                     threads.append(stat_thread)
 
                 scripts_path = core_path + f'actions/action{id}/'
@@ -297,11 +270,11 @@ def main():
                 thread = Thread(name=name, target=run_custom,
                                 args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
                 thread.start()
-                print(f'thread: {thread.name} is started')
+                print(f'thread: {thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                 threads.append(thread)
 
             for thread in threads:
-                print(f"thread {thread} is STOPPED")
+                print(f'thread {thread} is STOPPED at {datetime.now().strftime("%H:%M:%S")}')
                 thread.join()
 
             print("all threads are stopped")

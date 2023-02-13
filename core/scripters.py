@@ -29,7 +29,7 @@ def generate_custom(id, h_map, traffic, duration):
                 if t[0] in ["TCP", "UDP"]:
                     rec_port = random.randint(8999, 11000)
                     #-rp {rec_port}
-                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C 50 -c 50 -t {int(duration)*1000} -T {t[0]}\n")
+                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C 1000 -c 4000 -t {int(duration)*1000} -T {t[0]}\n")
                 else:
                     f.writelines(f"-a {h_map[h[1]]} {t[0]}\n")
             os.chmod(rf"{actions_path}action{id}/script{h[0]}", 0o777)

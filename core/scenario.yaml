@@ -3,7 +3,7 @@ scenario:
       id: 1
       name: custom_traffic.txt
       time: 0
-      duration: 30
+      duration: 60
 #  - script:
 #      id: 2
 #      name: custom_traffic2.txt
