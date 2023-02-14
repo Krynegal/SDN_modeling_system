@@ -47,7 +47,6 @@ def run_stats_processing(links, num_devices: int, duration, weight_func):
         threads.append(thread)
         print(f'start stats thread {t} at {datetime.datetime.now().strftime("%H:%M:%S")}')
     for thread in threads:
-        print(f'thread {thread} is STOPPED at {datetime.datetime.now().strftime("%H:%M:%S")}')
         thread.join()
 
 

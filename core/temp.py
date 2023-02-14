@@ -1,11 +1,16 @@
 import random
 
 if __name__ == '__main__':
-    h = 16
-    d = 5
-    for i in range(1, h):
-        print(i, int(i) % d if int(i) % d != 0 else d)
-
+    with open("/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts_100.txt", "r") as f:
+        lines = f.readlines()
+        lastSwitchNum = ""
+        for line in lines:
+            h, s = line.strip().split(', ')
+            if s != lastSwitchNum:
+                port_num = 0
+                lastSwitchNum = s
+            port_num += 1
+            print(h, s, port_num)
 
     # with open("custom_traffic_test.txt", "w") as f:
     #     f.write("UDP; ")

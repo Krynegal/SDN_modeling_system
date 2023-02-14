@@ -24,15 +24,15 @@ sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
 
-from core.read_scenario import get_yaml_content
+from core.read_scenario import get_yaml_content, find_max_flow_duration
 from utils import get_host_addr_map, get_receivers, get_senders
 from scripters import generate_custom, read_custom_traffic
 from runners import run_custom, run_stats_processing
 from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_switch_map_reachability_matrix, \
-    remove_duplicates, get_hosts_info, to_onos_device, to_hex
+    remove_duplicates, to_onos_device, to_hex
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
-from onos.api import post_intents, get_links, get_hosts, fwd_activate
+from onos.api import post_intents, get_links, fwd_activate
 
 
 class Node:
@@ -121,40 +121,37 @@ def weight_func(x):
     return 1000 / (1000 - x)
 
 
-def find_max_flow_duration(read_data):
-    max_dur = 0
-    for s in read_data["scenario"]:
-        max_dur = max(s["script"]["duration"], max_dur)
-    return max_dur
-
-
-def gen_host_switch_pair():
-    h_num = 1
-    with open(f"{core_path}/topologies/fat_tree_hosts_test.txt", "w") as f:
-        for s in range(1, 8 + 1):
-            for h in range(1, 24 + 1):
-                f.write(f'{h_num}, {s}\n')
-                h_num += 1
 # def gen_host_switch_pair():
 #     h_num = 1
-#     with open(f"{core_path}/topologies/fat_tree_hosts_100.txt", "w") as f:
-#         for s in range(1, 40 + 1):
-#             for h in range(1, 5 + 1):
+#     with open(f"{core_path}/topologies/fat_tree_hosts_test.txt", "w") as f:
+#         for s in range(1, 8 + 1):
+#             for h in range(1, 24 + 1):
 #                 f.write(f'{h_num}, {s}\n')
 #                 h_num += 1
+def gen_host_switch_pair():
+    h_num = 1
+    with open(f"{core_path}/topologies/fat_tree_hosts_100.txt", "w") as f:
+        for s in range(1, 40 + 1):
+            for h in range(1, 5 + 1):
+                f.write(f'{h_num}, {s}\n')
+                h_num += 1
 
 
 def get_hosts_info_2(net):
     hosts_info = {}
     with open(f"{topo_path_hosts}", "r") as f:
         lines = f.readlines()
+        lastSwitchNum = ""
         for line in lines:
             h, s = line.strip().split(', ')
+            if s != lastSwitchNum:
+                port_num = 0
+                lastSwitchNum = s
+            port_num += 1
             net_host = net.get(f'h{h}')
             res = net_host.cmd("ifconfig | awk 'FNR==2||FNR==4{print $2}'")
             ip, mac = [x.strip() for x in res.split("\n")][:2]
-            max_used_port = 2
-            port = str(int(h) % max_used_port if int(h) % max_used_port != 0 else max_used_port)
+            port = str(port_num)
             switch = int(s)
             onos_switch = to_onos_device(to_hex(switch))
             hosts_info[h] = {
@@ -167,7 +164,7 @@ def get_hosts_info_2(net):
 
 
 def main():
-    gen_host_switch_pair()
+    # gen_host_switch_pair()
 
     net = Mininet()
     c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
@@ -219,8 +216,8 @@ def main():
             for action in read_data['scenario']:
                 # получаем информацию об очередном потоке
                 id = action['script']['id']
-                start_time = action['script']['time']
-                duration = action['script']['duration']
+                start_time = action['script']['start_time']
+                traffic_conf = action['script']['traffic_conf']
                 print(f"{action['script']['id']} in cycle! sleep {start_time} seconds")
                 time.sleep(start_time)
 
@@ -229,7 +226,6 @@ def main():
                 traffic = read_custom_traffic(custom_t_file_path)
 
                 host_pairs_only = remove_duplicates(traffic[0][1])
-                print("here")
                 # TODO: упаковать в функцию
                 # мапа хост : свитч
                 host_switch_conn = {}
@@ -237,7 +233,6 @@ def main():
                     for line in f.readlines():
                         host, switch = map(int, line.strip().split(", "))
                         host_switch_conn[host] = switch
-                print("ok")
                 # определяем свитчи, которые будут использоваться в качестве стартовых нод для пар [<src, dst>,
                 # ... ] из трафика
                 switch_start_pairs = get_switch_start_pairs(host_pairs_only, host_switch_conn)
@@ -255,7 +250,7 @@ def main():
 
                 receivers = get_receivers(traffic)
                 senders = get_senders(traffic)
-                generate_custom(id, host_addr_map, traffic, duration)
+                generate_custom(id, host_addr_map, traffic, traffic_conf)
 
                 if id == 1:
                     time.sleep(20)
@@ -268,7 +263,7 @@ def main():
                 scripts_path = core_path + f'actions/action{id}/'
                 name = str(id)
                 thread = Thread(name=name, target=run_custom,
-                                args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
+                                args=(scripts_path, hosts, senders, receivers, all_receivers, traffic_conf["duration"],))
                 thread.start()
                 print(f'thread: {thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                 threads.append(thread)
