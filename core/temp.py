@@ -1,27 +1,16 @@
 import random
 
 if __name__ == '__main__':
-    # nodes = []
-    # m = {}
-    # with open("/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree.txt", "r") as f:
-    #     for line in f.readlines():
-    #         splited_line = line.strip().split(", ")
-    #         nodes.extend(splited_line)
-    #         src, dst = map(int, splited_line)
-    #         if src not in m.keys():
-    #             m[src] = []
-    #         m[src].append(dst)
-    # nodes = set(nodes)
-    # print(nodes)
-    # print(m)
-    # matrix = [[0] * len(nodes) for _ in range(len(nodes))]
-    # for k in m:
-    #     for v in m[k]:
-    #         src, dst = k, v
-    #         matrix[src - 1][dst - 1] = 1
-    #         matrix[dst - 1][src - 1] = 1
-    # for i in matrix:
-    #     print(i)
+    with open("/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt", "r") as f:
+        file = f.readlines()
+    weights_matrix = []
+    for line in file:
+        if line == '\n':
+            break
+        line = line.strip(', \n')
+        weights_matrix.append([float(x) for x in line.split(',')])
+    for i in weights_matrix:
+        print(i)
 
 
     # with open("custom_traffic_test.txt", "w") as f:

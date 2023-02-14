@@ -64,6 +64,8 @@ def read_weights_matrix():
         file = f.readlines()
     weights_matrix = []
     for line in file:
+        if line == '\n':
+            break
         line = line.strip(', \n')
         weights_matrix.append([float(x) for x in line.split(',')])
     return weights_matrix

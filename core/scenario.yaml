@@ -9,19 +9,19 @@ flows:
       duration: 30
       rate: 1000
       pktSize: 3000
-#  -
-#    id: 2
-#    name: custom_traffic2.txt
-#    start_time: 30
-#    traffic_conf:
-#      duration: 15
-#      rate: 1000
-#      pktSize: 3000
-#  -
-#    id: 3
-#    name: custom_traffic3.txt
-#    start_time: 15
-#    traffic_conf:
-#      duration: 15
-#      rate: 1000
-#      pktSize: 3000
+  -
+    id: 2
+    name: custom_traffic2.txt
+    start_time: 30
+    traffic_conf:
+      duration: 15
+      rate: 1000
+      pktSize: 500
+  -
+    id: 3
+    name: custom_traffic3.txt
+    start_time: 15
+    traffic_conf:
+      duration: 15
+      rate: 1000
+      pktSize: 500
