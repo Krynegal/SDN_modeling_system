@@ -2,8 +2,12 @@ scenario:
   - script:
       id: 1
       name: custom_traffic.txt
-      time: 0
-      duration: 30
+      start_time: 0
+      traffic_conf:
+        duration: 30
+        rate: 1000
+        pktSize: 3000
+
 #  - script:
 #      id: 2
 #      name: custom_traffic2.txt

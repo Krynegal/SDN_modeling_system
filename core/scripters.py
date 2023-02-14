@@ -19,7 +19,7 @@ def read_custom_traffic(file_path):
     return res
 
 
-def generate_custom(id, h_map, traffic, duration):
+def generate_custom(id, h_map, traffic, traffic_conf):
     # os.system(f'cd {scripts_path} && rm script* -f')
     if not os.path.exists(f'{actions_path}action{id}'):
         os.mkdir(f'{actions_path}action{id}')
@@ -28,8 +28,10 @@ def generate_custom(id, h_map, traffic, duration):
             with open(f"{actions_path}action{id}/script{h[0]}", "a") as f:
                 if t[0] in ["TCP", "UDP"]:
                     rec_port = random.randint(8999, 11000)
-                    #-rp {rec_port}
-                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C 1000 -c 2000 -t {int(duration)*1000} -T {t[0]}\n")
+                    duration = int(traffic_conf["duration"]) * 1000  # conversion to milliseconds
+                    rate = int(traffic_conf["rate"])
+                    pkt_size = int(traffic_conf["pktSize"])
+                    f.writelines(f"-a {h_map[h[1]]} -rp {rec_port} -C {rate} -c {pkt_size} -t {duration} -T {t[0]}\n")
                 else:
                     f.writelines(f"-a {h_map[h[1]]} {t[0]}\n")
             os.chmod(rf"{actions_path}action{id}/script{h[0]}", 0o777)

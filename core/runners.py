@@ -1,4 +1,7 @@
+import datetime
 import time
+from threading import Thread
+
 from onos.stats import get_spm, get_stats
 import numpy as np
 
@@ -36,12 +39,38 @@ def write_matrix(f, matrix):
 def run_stats_processing(links, num_devices: int, duration, weight_func):
     matrix = np.full((num_devices, num_devices), -1)
     src_ports_map = get_spm(links)
+    threads = []
     for t in range(2, duration+1, 2):
         time.sleep(2)
-        matrix = get_stats(matrix, src_ports_map)
-        weight_matrix = np.where(matrix == -1, 0, weight_func(matrix))
-        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
-            write_matrix(f, weight_matrix)
-        with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
-            f.write(f"=======================================  {t} seconds  ========================================\n")
-            write_matrix(f, weight_matrix)
+        thread = Thread(name=f"stats thread {t}", target=temp, args=(matrix, src_ports_map, weight_func, t,))
+        thread.start()
+        threads.append(thread)
+        print(f'start stats thread {t} at {datetime.datetime.now().strftime("%H:%M:%S")}')
+    for thread in threads:
+        thread.join()
+
+
+def temp(matrix, src_ports_map, weight_func, t):
+    matrix = get_stats(matrix, src_ports_map)
+    weight_matrix = np.where(matrix == -1, 0, weight_func(matrix))
+    with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
+        write_matrix(f, weight_matrix)
+    with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
+        f.write(f"=======================================  {t} seconds  ========================================\n")
+        write_matrix(f, weight_matrix)
+
+
+# def run_stats_processing(links, num_devices: int, duration, weight_func):
+#     matrix = np.full((num_devices, num_devices), -1)
+#     src_ports_map = get_spm(links)
+#     for t in range(2, duration+1, 2):
+#         print(f'start iteration t={t} at {datetime.datetime.now().strftime("%H:%M:%S")}')
+#         time.sleep(2)
+#         matrix = get_stats(matrix, src_ports_map)
+#         weight_matrix = np.where(matrix == -1, 0, weight_func(matrix))
+#         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
+#             write_matrix(f, weight_matrix)
+#         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
+#             f.write(f"=======================================  {t} seconds  ========================================\n")
+#             write_matrix(f, weight_matrix)
+#         print(f'end iteration t={t} at {datetime.datetime.now().strftime("%H:%M:%S")}')

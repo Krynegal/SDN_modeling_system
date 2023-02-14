@@ -2,6 +2,7 @@
 import os
 import sys
 import time
+from datetime import datetime
 from threading import Thread
 
 from mininet.net import Mininet
@@ -23,15 +24,15 @@ sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
 
-from core.read_scenario import get_yaml_content
+from core.read_scenario import get_yaml_content, find_max_flow_duration
 from utils import get_host_addr_map, get_receivers, get_senders
 from scripters import generate_custom, read_custom_traffic
 from runners import run_custom, run_stats_processing
 from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_switch_map_reachability_matrix, \
-    remove_duplicates, get_hosts_info
+    remove_duplicates, to_onos_device, to_hex
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
-from onos.api import post_intents, get_links, get_hosts, fwd_activate
+from onos.api import post_intents, get_links, fwd_activate
 
 
 class Node:
@@ -92,13 +93,13 @@ class MyTopo(Topo):
         # создаем все хосты и коннектим их с их свитчами
         for host_num in host_switch_conn:
             host = self.addHost(f'h{host_num}', ip=f'192.168.{host_num // 255}.{host_num % 255 + (host_num // 255)}')
-            self.addLink(host, switches[host_switch_conn[host_num] - 1])
+            self.addLink(host, switches[host_switch_conn[host_num] - 1], bw=1000)
 
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
-                    self.addLink(switches[row], switches[col])
+                    self.addLink(switches[row], switches[col], bw=1000)
 
 
 def delete_old_files():
@@ -111,7 +112,7 @@ core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 topo_file = 'topologies/fat_tree.txt'
-switch_hosts_conn_file = 'topologies/fat_tree_hosts_test.txt'
+switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
 topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
@@ -120,42 +121,50 @@ def weight_func(x):
     return 1000 / (1000 - x)
 
 
-def find_max_flow_duration(read_data):
-    max_dur = 0
-    for s in read_data["scenario"]:
-        max_dur = max(s["script"]["duration"], max_dur)
-    return max_dur
-
-
+# def gen_host_switch_pair():
+#     h_num = 1
+#     with open(f"{core_path}/topologies/fat_tree_hosts_test.txt", "w") as f:
+#         for s in range(1, 8 + 1):
+#             for h in range(1, 24 + 1):
+#                 f.write(f'{h_num}, {s}\n')
+#                 h_num += 1
 def gen_host_switch_pair():
     h_num = 1
-    with open(f"{core_path}/topologies/fat_tree_hosts_test.txt", "w") as f:
-        for s in range(1, 8 + 1):
-            for h in range(1, 24 + 1):
+    with open(f"{core_path}/topologies/fat_tree_hosts_100.txt", "w") as f:
+        for s in range(1, 40 + 1):
+            for h in range(1, 5 + 1):
                 f.write(f'{h_num}, {s}\n')
                 h_num += 1
 
 
-def ping(host, addresses):
-    for addr in addresses:
-        host.cmd(f'ping {addr} -c 1 -q')
-
-
-def pingall(hosts, addresses):
-    threads = []
-    for i in range(len(hosts)):
-        host = hosts[i]
-        thread = Thread(target=ping, args=(host, addresses))
-        threads.append(thread)
-        thread.start()
-
-    for thread in threads:
-        print(f"thread {thread} is STOPPED")
-        thread.join()
+def get_hosts_info_2(net):
+    hosts_info = {}
+    with open(f"{topo_path_hosts}", "r") as f:
+        lines = f.readlines()
+        lastSwitchNum = ""
+        for line in lines:
+            h, s = line.strip().split(', ')
+            if s != lastSwitchNum:
+                port_num = 0
+                lastSwitchNum = s
+            port_num += 1
+            net_host = net.get(f'h{h}')
+            res = net_host.cmd("ifconfig | awk 'FNR==2||FNR==4{print $2}'")
+            ip, mac = [x.strip() for x in res.split("\n")][:2]
+            port = str(port_num)
+            switch = int(s)
+            onos_switch = to_onos_device(to_hex(switch))
+            hosts_info[h] = {
+                "mac": mac,  # string
+                "port": port,  # string
+                "switch": switch,  # int, example: 1..192
+                "onos_switch": onos_switch,  # string of:00000000000000a
+            }
+    return hosts_info
 
 
 def main():
-    gen_host_switch_pair()
+    # gen_host_switch_pair()
 
     net = Mininet()
     c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
@@ -165,7 +174,6 @@ def main():
     net.build()
     net.start()
     time.sleep(5)
-    # net.pingAll()
 
     print(topo.g.node)
     topo_nodes = topo.g.node
@@ -178,10 +186,7 @@ def main():
         if 'isSwitch' in topo_nodes[node] and topo_nodes[node]["isSwitch"]:
             switches_num += 1
     print(f'switchesNum: {switches_num}\n')
-
     print(host_addr_map.values())
-    pingall(hosts, host_addr_map.values())
-    fwd_activate(False)
 
     while True:
         print('input "m" to run mininet console')
@@ -198,8 +203,8 @@ def main():
             links = get_links()
             graph = get_dijkstra_graph(links)
 
-            hosts_list = get_hosts()
-            hosts_info = get_hosts_info(hosts_list)
+            hosts_info = get_hosts_info_2(net)
+            print(f"hosts_info: {hosts_info}")
 
             # матрица достижимости для свитчей
             reachability_matrix = [[0] * switches_num for _ in range(switches_num)]
@@ -211,8 +216,8 @@ def main():
             for action in read_data['scenario']:
                 # получаем информацию об очередном потоке
                 id = action['script']['id']
-                start_time = action['script']['time']
-                duration = action['script']['duration']
+                start_time = action['script']['start_time']
+                traffic_conf = action['script']['traffic_conf']
                 print(f"{action['script']['id']} in cycle! sleep {start_time} seconds")
                 time.sleep(start_time)
 
@@ -221,7 +226,6 @@ def main():
                 traffic = read_custom_traffic(custom_t_file_path)
 
                 host_pairs_only = remove_duplicates(traffic[0][1])
-
                 # TODO: упаковать в функцию
                 # мапа хост : свитч
                 host_switch_conn = {}
@@ -246,25 +250,26 @@ def main():
 
                 receivers = get_receivers(traffic)
                 senders = get_senders(traffic)
-                generate_custom(id, host_addr_map, traffic, duration)
+                generate_custom(id, host_addr_map, traffic, traffic_conf)
 
                 if id == 1:
                     time.sleep(20)
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
                                          args=(links, switches_num, max_flow_duration, weight_func,))
                     stat_thread.start()
+                    print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                     threads.append(stat_thread)
 
                 scripts_path = core_path + f'actions/action{id}/'
                 name = str(id)
                 thread = Thread(name=name, target=run_custom,
-                                args=(scripts_path, hosts, senders, receivers, all_receivers, duration,))
+                                args=(scripts_path, hosts, senders, receivers, all_receivers, traffic_conf["duration"],))
                 thread.start()
-                print(f'thread: {thread.name} is started')
+                print(f'thread: {thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                 threads.append(thread)
 
             for thread in threads:
-                print(f"thread {thread} is STOPPED")
+                print(f'thread {thread} is STOPPED at {datetime.now().strftime("%H:%M:%S")}')
                 thread.join()
 
             print("all threads are stopped")
