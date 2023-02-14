@@ -1,16 +1,28 @@
 import random
 
 if __name__ == '__main__':
-    with open("/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts_100.txt", "r") as f:
-        lines = f.readlines()
-        lastSwitchNum = ""
-        for line in lines:
-            h, s = line.strip().split(', ')
-            if s != lastSwitchNum:
-                port_num = 0
-                lastSwitchNum = s
-            port_num += 1
-            print(h, s, port_num)
+    # nodes = []
+    # m = {}
+    # with open("/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree.txt", "r") as f:
+    #     for line in f.readlines():
+    #         splited_line = line.strip().split(", ")
+    #         nodes.extend(splited_line)
+    #         src, dst = map(int, splited_line)
+    #         if src not in m.keys():
+    #             m[src] = []
+    #         m[src].append(dst)
+    # nodes = set(nodes)
+    # print(nodes)
+    # print(m)
+    # matrix = [[0] * len(nodes) for _ in range(len(nodes))]
+    # for k in m:
+    #     for v in m[k]:
+    #         src, dst = k, v
+    #         matrix[src - 1][dst - 1] = 1
+    #         matrix[dst - 1][src - 1] = 1
+    # for i in matrix:
+    #     print(i)
+
 
     # with open("custom_traffic_test.txt", "w") as f:
     #     f.write("UDP; ")

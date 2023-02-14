@@ -55,11 +55,16 @@ class Graph:
 
 class MyTopo(Topo):
     def build(self):
-        fwd_activate(True)
         nodes = []
+        adjacency_list = {}
         with open(topo_path, "r") as f:
             for line in f.readlines():
-                nodes.extend(line.strip().split(", "))
+                splited_line = line.strip().split(", ")
+                nodes.extend(splited_line)
+                src, dst = map(int, splited_line)
+                if src not in adjacency_list.keys():
+                    adjacency_list[src] = []
+                adjacency_list[src].append(dst)
 
         nodes = list(set(nodes))
         nodes.sort(key=int)
@@ -69,20 +74,19 @@ class MyTopo(Topo):
 
         graph = Graph.create_from_nodes(nodes)
 
-        # матрица соединений свитчей
-        matrix = [[0] * len(nodes) for _ in range(len(nodes))]
-        with open(topo_path, "r") as f:
-            for line in f.readlines():
-                src, dst = map(int, line.strip().split(", "))
-                matrix[src - 1][dst - 1] = 1
-                matrix[dst - 1][src - 1] = 1
-
         # мапа хост : свитч
         host_switch_conn = {}
         with open(topo_path_hosts, "r") as f:
             for line in f.readlines():
                 host, switch = map(int, line.strip().split(", "))
                 host_switch_conn[host] = switch
+
+        # матрица соединений свитчей
+        matrix = [[0] * len(nodes) for _ in range(len(nodes))]
+        for src in adjacency_list:
+            for dst in adjacency_list[src]:
+                matrix[src - 1][dst - 1] = 1
+                matrix[dst - 1][src - 1] = 1
 
         graph.adj_mat = matrix
         switches = []
@@ -108,11 +112,14 @@ def delete_old_files():
     os.system(f'cd {itg_path} && ./deleteTxt.sh')
 
 
+scenario = get_yaml_content()
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
 scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-topo_file = 'topologies/fat_tree.txt'
-switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
+# topo_file = 'topologies/fat_tree.txt'
+# switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
+topo_file = 'topologies/' + scenario["topo_file_path"]
+switch_hosts_conn_file = 'topologies/' + scenario["switch_hosts_conn_file_path"]
 topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
@@ -211,18 +218,18 @@ def main():
 
             threads = []
             all_receivers = []
-            read_data = get_yaml_content()
-            max_flow_duration = find_max_flow_duration(read_data)
-            for action in read_data['scenario']:
+            scenario = get_yaml_content()
+            max_flow_duration = find_max_flow_duration(scenario)
+            for flow in scenario['flows']:
                 # получаем информацию об очередном потоке
-                id = action['script']['id']
-                start_time = action['script']['start_time']
-                traffic_conf = action['script']['traffic_conf']
-                print(f"{action['script']['id']} in cycle! sleep {start_time} seconds")
+                id = flow['id']
+                start_time = flow['start_time']
+                traffic_conf = flow['traffic_conf']
+                print(f"{flow['id']} in cycle! sleep {start_time} seconds")
                 time.sleep(start_time)
 
                 # получаем трафик, который будет передаваться в потоке
-                custom_t_file_path = core_path + action['script']['name']
+                custom_t_file_path = core_path + flow['name']
                 traffic = read_custom_traffic(custom_t_file_path)
 
                 host_pairs_only = remove_duplicates(traffic[0][1])
