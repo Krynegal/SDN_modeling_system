@@ -32,7 +32,7 @@ from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_s
     remove_duplicates, to_onos_device, to_hex
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
-from onos.api import post_intents, get_links, fwd_activate
+from onos.api import post_intents, get_links
 
 
 class Node:
@@ -229,7 +229,7 @@ def main():
                 time.sleep(start_time)
 
                 # получаем трафик, который будет передаваться в потоке
-                custom_t_file_path = core_path + flow['name']
+                custom_t_file_path = core_path + 'custom_traffics/' + flow['name']
                 traffic = read_custom_traffic(custom_t_file_path)
 
                 host_pairs_only = remove_duplicates(traffic[0][1])
