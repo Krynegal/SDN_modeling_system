@@ -1,11 +1,12 @@
 import requests as req
 import json
 
+IP = "172.17.0.5"
 USER = ("onos", "rocks")
 
 
 def get_intents():
-    res = req.get(f"http://172.17.0.2:8181/onos/v1/intents?detail=true", auth=USER)
+    res = req.get(f"http://{IP}:8181/onos/v1/intents?detail=true", auth=USER)
     intents = res.json()["intents"]
     with open("../jsonFiles/intents.json", "w") as f:
         f.write(json.dumps(res.json(), indent=4))

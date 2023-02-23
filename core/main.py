@@ -125,7 +125,7 @@ topo_path_hosts = core_path + switch_hosts_conn_file
 
 
 def weight_func(x):
-    return 1000 / (1000 - x)
+    return 10_000 / (10_000 - x)
 
 
 # def gen_host_switch_pair():
@@ -174,7 +174,7 @@ def main():
     # gen_host_switch_pair()
 
     net = Mininet()
-    c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.2', port=6653)
+    c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.5', port=6653)
     topo = MyTopo()
     net = Mininet(topo=topo, controller=RemoteController, build=False, link=TCLink)
     net.addController(c0)

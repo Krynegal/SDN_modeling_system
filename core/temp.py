@@ -1,24 +1,12 @@
 import random
 
 if __name__ == '__main__':
-    with open("/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt", "r") as f:
-        file = f.readlines()
-    weights_matrix = []
-    for line in file:
-        if line == '\n':
-            break
-        line = line.strip(', \n')
-        weights_matrix.append([float(x) for x in line.split(',')])
-    for i in weights_matrix:
-        print(i)
-
-
-    # with open("custom_traffic_test.txt", "w") as f:
-    #     f.write("UDP; ")
-    #     recv = [_ for _ in range(1, 192+1)]
-    #     random.shuffle(recv)
-    #     for s in range(1, 192+1):
-    #         f.write(f'{s},{recv[s-1]}; ')
+    with open("custom_traffics/custom_traffic_200.txt", "w") as f:
+        f.write("UDP; ")
+        recv = [_ for _ in range(1, 200+1)]
+        random.shuffle(recv)
+        for s in range(1, 200+1):
+            f.write(f'{s},{recv[s-1]}; ')
 
     # with open("topologies/fat_tree_100.txt", "w") as f:
     #     x = 40  # кол-во свитчей на двух нижний уровнях в 3-х уровневой топологии
