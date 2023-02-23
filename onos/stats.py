@@ -5,6 +5,7 @@ import sys
 from urllib import parse
 import numpy as np
 
+IP = "172.17.0.5"
 USER = ("onos", "rocks")
 
 
@@ -12,7 +13,7 @@ def get_stats(matrix, spm: {}):
     try:
         for device in spm:
             for port in spm[device]:
-                res = req.get(f"http://172.17.0.2:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
+                res = req.get(f"http://{IP}:8181/onos/v1/statistics/flows/link?device={device}&port={port}", auth=USER)
                 # print(device, port)
                 bytes = 0
                 if len(res.json()["loads"]) > 0:
@@ -64,6 +65,8 @@ def read_weights_matrix():
         file = f.readlines()
     weights_matrix = []
     for line in file:
+        if line == '\n':
+            break
         line = line.strip(', \n')
         weights_matrix.append([float(x) for x in line.split(',')])
     return weights_matrix

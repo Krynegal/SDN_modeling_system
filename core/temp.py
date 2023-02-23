@@ -1,23 +1,12 @@
 import random
 
 if __name__ == '__main__':
-    with open("/home/andre/PycharmProjects/onos_short_path/core/topologies/fat_tree_hosts_100.txt", "r") as f:
-        lines = f.readlines()
-        lastSwitchNum = ""
-        for line in lines:
-            h, s = line.strip().split(', ')
-            if s != lastSwitchNum:
-                port_num = 0
-                lastSwitchNum = s
-            port_num += 1
-            print(h, s, port_num)
-
-    # with open("custom_traffic_test.txt", "w") as f:
-    #     f.write("UDP; ")
-    #     recv = [_ for _ in range(1, 192+1)]
-    #     random.shuffle(recv)
-    #     for s in range(1, 192+1):
-    #         f.write(f'{s},{recv[s-1]}; ')
+    with open("custom_traffics/custom_traffic_200.txt", "w") as f:
+        f.write("UDP; ")
+        recv = [_ for _ in range(1, 200+1)]
+        random.shuffle(recv)
+        for s in range(1, 200+1):
+            f.write(f'{s},{recv[s-1]}; ')
 
     # with open("topologies/fat_tree_100.txt", "w") as f:
     #     x = 40  # кол-во свитчей на двух нижний уровнях в 3-х уровневой топологии
