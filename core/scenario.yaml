@@ -1,5 +1,6 @@
 topo_file_path: fat_tree.txt
 switch_hosts_conn_file_path: fat_tree_hosts.txt
+switch_controller_file_path: switch_controller.txt
 flows:
   -
     id: 1

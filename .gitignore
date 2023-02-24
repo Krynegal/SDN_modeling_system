@@ -1,9 +1,10 @@
 .idea
 
 *.txt
-!core/custom_traffics/custom_traffic.txt
+!core/custom_traffics/*.txt
+!core/topologies/*.txt
+!core/*.txt
 
 parser/.ipynb_checkpoints/
 
 script*
-!core/scripters.py
