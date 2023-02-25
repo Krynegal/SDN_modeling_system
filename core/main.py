@@ -135,10 +135,6 @@ def get_switch_control_map(controllers: list) -> dict:
     return cmap
 
 
-def weight_func(x):
-    return 10_000 / (10_000 - x)
-
-
 # def gen_host_switch_pair():
 #     h_num = 1
 #     with open(f"{core_path}/topologies/fat_tree_hosts_test.txt", "w") as f:
@@ -270,7 +266,7 @@ def main():
                 if len(src_dst_switch_map) != 0:
                     if id != 1:
                         # обновляем матрицу весов графа
-                        graph.adj_mat = read_weights_matrix()
+                        graph.adj_mat = read_weights_matrix(id)
                     intents = get_intents_to_send(graph, hosts_info, links, src_dst_switch_map, switch_start_pairs)
                     post_intents(intents)
                 else:
@@ -283,7 +279,7 @@ def main():
                 if id == 1:
                     time.sleep(20)
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
-                                         args=(links, switches_num, max_flow_duration, weight_func,))
+                                         args=(links, switches_num, max_flow_duration,))
                     stat_thread.start()
                     print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                     threads.append(stat_thread)
