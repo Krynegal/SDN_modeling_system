@@ -7,7 +7,7 @@ from core.weight_functions import weight_funcs
 from onos.stats import get_spm, get_stats
 
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
-scripts_path = core_path + 'scripts/'
+# scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 
 

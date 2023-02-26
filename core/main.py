@@ -114,7 +114,7 @@ def delete_old_files():
 
 scenario = get_yaml_content()
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
-scripts_path = core_path + 'scripts/'
+# scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 # topo_file = 'topologies/fat_tree.txt'
 # switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
@@ -125,13 +125,24 @@ topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
 
-def get_switch_control_map(controllers: list) -> dict:
+def read_switch_controller_file() -> dict:
     with open(switch_controller_file, "r") as f:
         lines = f.readlines()
-    cmap = {}
+    switch_controller = {}
     for line in lines:
         switch_num, controller_num = line.strip().split(', ')
-        cmap[f's{switch_num}'] = controllers[int(controller_num)-1]
+        switch_controller[switch_num] = controller_num
+    return switch_controller
+
+
+def get_number_of_controllers(switch_controller: dict) -> int:
+    return len(set(switch_controller.values()))
+
+
+def get_cmap(switch_controller: dict, controllers: list) -> dict:
+    cmap = {}
+    for switch in switch_controller:
+        cmap[f's{switch}'] = controllers[int(switch_controller[switch]) - 1]
     return cmap
 
 
@@ -180,12 +191,17 @@ def get_hosts_info_2(net):
 def main():
     # gen_host_switch_pair()
 
+    switch_ctrls = read_switch_controller_file()
+    ctrls_num = get_number_of_controllers(switch_ctrls)
     ctrls = []
-    c1 = RemoteController('c1', ip='172.17.0.5', port=6653)
-    c2 = RemoteController('c2', ip='172.17.0.6', port=6653)
-    ctrls.append(c1)
-    ctrls.append(c2)
-    cmap = get_switch_control_map(controllers=ctrls)
+    p = 2
+    if ctrls_num != 1:
+        p = 5
+    for i in range(ctrls_num):
+        c = RemoteController(f'c{i+1}', ip=f'172.17.0.{p}', port=6653)
+        ctrls.append(c)
+        p += 1
+    cmap = get_cmap(switch_ctrls, ctrls)
 
     class MultiSwitch(OVSSwitch):
         def start(self, controllers):
@@ -288,7 +304,7 @@ def main():
                 name = str(id)
                 thread = Thread(name=name, target=run_custom,
                                 args=(
-                                scripts_path, hosts, senders, receivers, all_receivers, traffic_conf["duration"],))
+                                    scripts_path, hosts, senders, receivers, all_receivers, traffic_conf["duration"],))
                 thread.start()
                 print(f'thread: {thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                 threads.append(thread)
