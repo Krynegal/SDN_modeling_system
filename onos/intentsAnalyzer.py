@@ -15,8 +15,8 @@ def get_intents():
 
 if __name__ == '__main__':
     intents = get_intents()
-    SOURCE = "C2:35:2E:08:99:F1"
-    DESTINATION = "9E:F0:6D:81:02:48"
+    SOURCE = "72:F1:8C:8D:AA:1C"
+    DESTINATION = "62:C4:7E:48:4B:E9"
     intents_num = 0
     for intent in intents:
         src_mac = intent["treatment"]["instructions"][0]["mac"]

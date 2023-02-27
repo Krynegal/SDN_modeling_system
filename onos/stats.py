@@ -58,9 +58,11 @@ def get_spm(links):
     return src_ports_map
 
 
-def read_weights_matrix():
+def read_weights_matrix(id):
     os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt '
               '/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt')
+    os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt '
+              f'/home/andre/PycharmProjects/onos_short_path/onos/taken_weights{id}.txt')
     with open("/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt", "r") as f:
         file = f.readlines()
     weights_matrix = []

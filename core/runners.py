@@ -1,12 +1,13 @@
 import datetime
 import time
 from threading import Thread
-
-from onos.stats import get_spm, get_stats
 import numpy as np
 
+from core.weight_functions import weight_funcs
+from onos.stats import get_spm, get_stats
+
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
-scripts_path = core_path + 'scripts/'
+# scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 
 
@@ -26,7 +27,7 @@ def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_rec
 
     for i in senders:
         hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} -l send{i}.log &')
-    time.sleep(duration)
+    time.sleep(int(duration))
 
 
 def write_matrix(f, matrix):
@@ -36,13 +37,23 @@ def write_matrix(f, matrix):
     f.write("\n")
 
 
-def run_stats_processing(links, num_devices: int, duration, weight_func):
+def run_stats_processing(links, num_devices: int, duration):
     matrix = np.full((num_devices, num_devices), -1)
     src_ports_map = get_spm(links)
     threads = []
-    for t in range(2, duration+1, 2):
+
+    # определяем, к какому контроллеру принадлежит линк
+    switch_controller_map = {}
+    with open("/home/andre/PycharmProjects/onos_short_path/core/switch_controller.txt", "r") as f:
+        for line in f.readlines():
+            splited_line = line.strip().split(", ")
+            switch, controller = map(int, splited_line)
+            switch_controller_map[switch] = controller
+
+    for t in range(2, duration + 1, 2):
         time.sleep(2)
-        thread = Thread(name=f"stats thread {t}", target=temp, args=(matrix, src_ports_map, weight_func, t,))
+        thread = Thread(name=f"stats thread {t}", target=temp,
+                        args=(matrix, src_ports_map, t, switch_controller_map,))
         thread.start()
         threads.append(thread)
         print(f'start stats thread {t} at {datetime.datetime.now().strftime("%H:%M:%S")}')
@@ -50,27 +61,24 @@ def run_stats_processing(links, num_devices: int, duration, weight_func):
         thread.join()
 
 
-def temp(matrix, src_ports_map, weight_func, t):
+def temp(matrix, src_ports_map, t, switch_controller_map):
     matrix = get_stats(matrix, src_ports_map)
-    weight_matrix = np.where(matrix == -1, 0, weight_func(matrix))
+    n = len(matrix)
+    weight_matrix = np.full((n, n), 0.0)
+
+    for i in range(n):
+        for j in range(i):
+            if matrix[i][j] == -1:
+                continue
+            elif switch_controller_map[i + 1] == switch_controller_map[j + 1]:
+                w_func = weight_funcs[switch_controller_map[i + 1]]
+            else:
+                w_func = weight_funcs[2]
+            weight_matrix[i][j] = w_func(matrix[i][j])
+            weight_matrix[j][i] = weight_matrix[i][j]
+
     with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
         write_matrix(f, weight_matrix)
     with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
         f.write(f"=======================================  {t} seconds  ========================================\n")
         write_matrix(f, weight_matrix)
-
-
-# def run_stats_processing(links, num_devices: int, duration, weight_func):
-#     matrix = np.full((num_devices, num_devices), -1)
-#     src_ports_map = get_spm(links)
-#     for t in range(2, duration+1, 2):
-#         print(f'start iteration t={t} at {datetime.datetime.now().strftime("%H:%M:%S")}')
-#         time.sleep(2)
-#         matrix = get_stats(matrix, src_ports_map)
-#         weight_matrix = np.where(matrix == -1, 0, weight_func(matrix))
-#         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights.txt", "w") as f:
-#             write_matrix(f, weight_matrix)
-#         with open("/home/andre/PycharmProjects/onos_short_path/onos/weights_all.txt", "a+") as f:
-#             f.write(f"=======================================  {t} seconds  ========================================\n")
-#             write_matrix(f, weight_matrix)
-#         print(f'end iteration t={t} at {datetime.datetime.now().strftime("%H:%M:%S")}')

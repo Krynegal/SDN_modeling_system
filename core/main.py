@@ -9,7 +9,7 @@ from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.cli import CLI
 from mininet.link import TCLink
-from mininet.node import RemoteController
+from mininet.node import RemoteController, OVSSwitch
 
 conf_path = os.getcwd()
 sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
@@ -114,18 +114,36 @@ def delete_old_files():
 
 scenario = get_yaml_content()
 core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
-scripts_path = core_path + 'scripts/'
+# scripts_path = core_path + 'scripts/'
 itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
 # topo_file = 'topologies/fat_tree.txt'
 # switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
 topo_file = 'topologies/' + scenario["topo_file_path"]
 switch_hosts_conn_file = 'topologies/' + scenario["switch_hosts_conn_file_path"]
+switch_controller_file = scenario["switch_controller_file_path"]
 topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
 
 
-def weight_func(x):
-    return 10_000 / (10_000 - x)
+def read_switch_controller_file() -> dict:
+    with open(switch_controller_file, "r") as f:
+        lines = f.readlines()
+    switch_controller = {}
+    for line in lines:
+        switch_num, controller_num = line.strip().split(', ')
+        switch_controller[switch_num] = controller_num
+    return switch_controller
+
+
+def get_number_of_controllers(switch_controller: dict) -> int:
+    return len(set(switch_controller.values()))
+
+
+def get_cmap(switch_controller: dict, controllers: list) -> dict:
+    cmap = {}
+    for switch in switch_controller:
+        cmap[f's{switch}'] = controllers[int(switch_controller[switch]) - 1]
+    return cmap
 
 
 # def gen_host_switch_pair():
@@ -170,14 +188,35 @@ def get_hosts_info_2(net):
     return hosts_info
 
 
+def get_onos_ips(onos_names: list) -> list:
+    onos_ips = []
+    for name in onos_names:
+        ip = os.popen(f"docker inspect -f '{{{{range.NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' {name}").read()
+        onos_ips.append(ip.strip())
+    return onos_ips
+
+
 def main():
     # gen_host_switch_pair()
 
-    net = Mininet()
-    c0 = net.addController('c0', controller=RemoteController, ip='172.17.0.5', port=6653)
+    switch_ctrls = read_switch_controller_file()
+    onos_ips = get_onos_ips(['onos-1', 'onos-2'])
+    print(f'onos_ips: {onos_ips}')
+    ctrls = []
+    for i in range(len(onos_ips)):
+        c = RemoteController(f'c{i+1}', ip=f'{onos_ips[i]}', port=6653)
+        ctrls.append(c)
+    cmap = get_cmap(switch_ctrls, ctrls)
+    print(f'cmap: {cmap}')
+
+    class MultiSwitch(OVSSwitch):
+        def start(self, controllers):
+            return OVSSwitch.start(self, [cmap[self.name]])
+
     topo = MyTopo()
-    net = Mininet(topo=topo, controller=RemoteController, build=False, link=TCLink)
-    net.addController(c0)
+    net = Mininet(topo=topo, switch=MultiSwitch, build=False, link=TCLink)
+    for c in ctrls:
+        net.addController(c)
     net.build()
     net.start()
     time.sleep(5)
@@ -249,7 +288,7 @@ def main():
                 if len(src_dst_switch_map) != 0:
                     if id != 1:
                         # обновляем матрицу весов графа
-                        graph.adj_mat = read_weights_matrix()
+                        graph.adj_mat = read_weights_matrix(id)
                     intents = get_intents_to_send(graph, hosts_info, links, src_dst_switch_map, switch_start_pairs)
                     post_intents(intents)
                 else:
@@ -262,7 +301,7 @@ def main():
                 if id == 1:
                     time.sleep(20)
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
-                                         args=(links, switches_num, max_flow_duration, weight_func,))
+                                         args=(links, switches_num, max_flow_duration,))
                     stat_thread.start()
                     print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                     threads.append(stat_thread)
@@ -270,7 +309,8 @@ def main():
                 scripts_path = core_path + f'actions/action{id}/'
                 name = str(id)
                 thread = Thread(name=name, target=run_custom,
-                                args=(scripts_path, hosts, senders, receivers, all_receivers, traffic_conf["duration"],))
+                                args=(
+                                    scripts_path, hosts, senders, receivers, all_receivers, traffic_conf["duration"],))
                 thread.start()
                 print(f'thread: {thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                 threads.append(thread)

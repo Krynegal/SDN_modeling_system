@@ -1,12 +1,33 @@
+import os
 import random
+import time
+from copy import copy, deepcopy
+import subprocess
+import numpy as np
 
 if __name__ == '__main__':
-    with open("custom_traffics/custom_traffic_200.txt", "w") as f:
-        f.write("UDP; ")
-        recv = [_ for _ in range(1, 200+1)]
-        random.shuffle(recv)
-        for s in range(1, 200+1):
-            f.write(f'{s},{recv[s-1]}; ')
+    # ip = subprocess.check_output("docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' atomix-1", universal_newlines=True)
+    # ip = subprocess.check_output("docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' atomix-1", shell=True)
+    ip = os.popen(f"docker inspect -f '{{{{range.NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' atomix-1").read()
+    print(ip)
+    #print(ip.strip())
+
+    # switch_controller_map = {}
+    # with open("/home/andre/PycharmProjects/onos_short_path/core/switch_controller.txt", "r") as f:
+    #     for line in f.readlines():
+    #         splited_line = line.strip().split(", ")
+    #         switch, controller = map(int, splited_line)
+    #         switch_controller_map[switch] = controller
+
+
+    # weight_matrix = np.where(matrix == -1, 0, 16)
+
+    # with open("custom_traffics/custom_traffic_200.txt", "w") as f:
+    #     f.write("UDP; ")
+    #     recv = [_ for _ in range(1, 200+1)]
+    #     random.shuffle(recv)
+    #     for s in range(1, 200+1):
+    #         f.write(f'{s},{recv[s-1]}; ')
 
     # with open("topologies/fat_tree_100.txt", "w") as f:
     #     x = 40  # кол-во свитчей на двух нижний уровнях в 3-х уровневой топологии

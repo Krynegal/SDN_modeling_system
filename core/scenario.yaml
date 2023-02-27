@@ -1,27 +1,28 @@
 topo_file_path: fat_tree.txt
 switch_hosts_conn_file_path: fat_tree_hosts.txt
+switch_controller_file_path: switch_controller.txt
 flows:
   -
     id: 1
-    name: custom_traffic.txt
+    name: c1.txt
     start_time: 0
     traffic_conf:
+      duration: 60
+      rate: 4000
+      pktSize: 4000
+  -
+    id: 2
+    name: c2.txt
+    start_time: 30
+    traffic_conf:
       duration: 30
-      rate: 1000
-      pktSize: 1000
-#  -
-#    id: 2
-#    name: custom_traffic2.txt
-#    start_time: 30
-#    traffic_conf:
-#      duration: 15
-#      rate: 1000
-#      pktSize: 500
-#  -
-#    id: 3
-#    name: custom_traffic3.txt
-#    start_time: 15
-#    traffic_conf:
-#      duration: 15
-#      rate: 1000
-#      pktSize: 500
+      rate: 4000
+      pktSize: 4000
+  -
+    id: 3
+    name: c3.txt
+    start_time: 15
+    traffic_conf:
+      duration: 15
+      rate: 2000
+      pktSize: 2000
