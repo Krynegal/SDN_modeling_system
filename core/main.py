@@ -188,20 +188,26 @@ def get_hosts_info_2(net):
     return hosts_info
 
 
+def get_onos_ips(onos_names: list) -> list:
+    onos_ips = []
+    for name in onos_names:
+        ip = os.popen(f"docker inspect -f '{{{{range.NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' {name}").read()
+        onos_ips.append(ip.strip())
+    return onos_ips
+
+
 def main():
     # gen_host_switch_pair()
 
     switch_ctrls = read_switch_controller_file()
-    ctrls_num = get_number_of_controllers(switch_ctrls)
+    onos_ips = get_onos_ips(['onos-1', 'onos-2'])
+    print(f'onos_ips: {onos_ips}')
     ctrls = []
-    p = 2
-    if ctrls_num != 1:
-        p = 5
-    for i in range(ctrls_num):
-        c = RemoteController(f'c{i+1}', ip=f'172.17.0.{p}', port=6653)
+    for i in range(len(onos_ips)):
+        c = RemoteController(f'c{i+1}', ip=f'{onos_ips[i]}', port=6653)
         ctrls.append(c)
-        p += 1
     cmap = get_cmap(switch_ctrls, ctrls)
+    print(f'cmap: {cmap}')
 
     class MultiSwitch(OVSSwitch):
         def start(self, controllers):
