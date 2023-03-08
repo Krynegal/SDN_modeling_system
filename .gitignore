@@ -4,7 +4,7 @@
 !core/custom_traffics/*.txt
 !core/topologies/*.txt
 !core/*.txt
-
+venv
 parser/.ipynb_checkpoints/
 
 script*
