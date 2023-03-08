@@ -13,18 +13,12 @@ from mininet.node import RemoteController, OVSSwitch
 
 conf_path = os.getcwd()
 sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
-sys.path.append("/usr/lib64/python310.zip")
-sys.path.append("/usr/lib64/python3.10")
-sys.path.append("/usr/lib64/python3.10/lib-dynload")
 sys.path.append("/home/andre/.local/lib/python3.10/site-packages")
-sys.path.append("/usr/local/lib64/python3.10/site-packages")
-sys.path.append("/usr/lib64/python3.10/site-packages")
-sys.path.append("/usr/lib/python3.10/site-packages")
 sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
 
-from core.read_scenario import get_yaml_content, find_max_flow_duration
+from core.read_scenario import read_scenario, find_max_flow_duration
 from utils import get_host_addr_map, get_receivers, get_senders
 from scripters import generate_custom, read_custom_traffic
 from runners import run_custom, run_stats_processing
@@ -33,6 +27,7 @@ from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_s
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
 from onos.api import post_intents, get_links
+from configs.configs import core_path, itg_path, used_onos_controllers
 
 
 class Node:
@@ -107,19 +102,14 @@ class MyTopo(Topo):
 
 
 def delete_old_files():
-    os.system(f'cd {itg_path} && ./deleteLogs.sh')
-    os.system(f'cd {itg_path} && ./deleteDat.sh')
-    os.system(f'cd {itg_path} && ./deleteTxt.sh')
+    os.system(f'cd {itg_path} && rm -f *.log')
+    os.system(f'cd {itg_path} && rm -f *.dat')
+    os.system(f'cd {itg_path} && rm -f *.txt')
 
 
-scenario = get_yaml_content()
-core_path = '/home/andre/PycharmProjects/onos_short_path/core/'
-# scripts_path = core_path + 'scripts/'
-itg_path = '/home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin'
-# topo_file = 'topologies/fat_tree.txt'
-# switch_hosts_conn_file = 'topologies/fat_tree_hosts.txt'
-topo_file = 'topologies/' + scenario["topo_file_path"]
-switch_hosts_conn_file = 'topologies/' + scenario["switch_hosts_conn_file_path"]
+scenario = read_scenario()
+topo_file = '/topologies/' + scenario["topo_file_path"]
+switch_hosts_conn_file = '/topologies/' + scenario["switch_hosts_conn_file_path"]
 switch_controller_file = scenario["switch_controller_file_path"]
 topo_path = core_path + topo_file
 topo_path_hosts = core_path + switch_hosts_conn_file
@@ -200,7 +190,7 @@ def main():
     # gen_host_switch_pair()
 
     switch_ctrls = read_switch_controller_file()
-    onos_ips = get_onos_ips(['onos-1', 'onos-2'])
+    onos_ips = get_onos_ips(used_onos_controllers)
     print(f'onos_ips: {onos_ips}')
     ctrls = []
     for i in range(len(onos_ips)):
@@ -243,7 +233,7 @@ def main():
         elif input_line[0] == 'c':
             # чистим файлы, оставшиеся после прошлых запусков
             delete_old_files()
-            os.system(f'rm -rf {core_path}actions/*')
+            os.system(f'rm -rf {core_path}/actions/*')
 
             # строим граф, который будем использовать для поиска путей минимальной стоимости
             links = get_links()
@@ -257,7 +247,7 @@ def main():
 
             threads = []
             all_receivers = []
-            scenario = get_yaml_content()
+            scenario = read_scenario()
             max_flow_duration = find_max_flow_duration(scenario)
             for flow in scenario['flows']:
                 # получаем информацию об очередном потоке
@@ -268,7 +258,7 @@ def main():
                 time.sleep(start_time)
 
                 # получаем трафик, который будет передаваться в потоке
-                custom_t_file_path = core_path + 'custom_traffics/' + flow['name']
+                custom_t_file_path = core_path + '/custom_traffics/' + flow['name']
                 traffic = read_custom_traffic(custom_t_file_path)
 
                 host_pairs_only = remove_duplicates(traffic[0][1])
@@ -301,12 +291,12 @@ def main():
                 if id == 1:
                     time.sleep(20)
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
-                                         args=(links, switches_num, max_flow_duration,))
+                                         args=(links, switches_num, max_flow_duration, switch_controller_file,))
                     stat_thread.start()
                     print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                     threads.append(stat_thread)
 
-                scripts_path = core_path + f'actions/action{id}/'
+                scripts_path = core_path + f'/actions/action{id}/'
                 name = str(id)
                 thread = Thread(name=name, target=run_custom,
                                 args=(

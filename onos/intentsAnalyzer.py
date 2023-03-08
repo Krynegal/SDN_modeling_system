@@ -1,7 +1,7 @@
 import requests as req
 import json
+from configs.configs import IP
 
-IP = "172.17.0.5"
 USER = ("onos", "rocks")
 
 

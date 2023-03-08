@@ -2,7 +2,6 @@ from copy import deepcopy
 import api
 import dijkstra
 import matrix
-from core.scripters import read_custom_traffic
 
 
 class Path:

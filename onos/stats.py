@@ -1,15 +1,12 @@
 import os
-
 import requests as req
-import sys
 from urllib import parse
-import numpy as np
+from configs.configs import IP, onos_path
 
-IP = "172.17.0.5"
 USER = ("onos", "rocks")
 
 
-def get_stats(matrix, spm: {}):
+def get_stats(matrix, spm: dict):
     try:
         for device in spm:
             for port in spm[device]:
@@ -46,12 +43,11 @@ def update_matrix(matrix, dev1, dev2, bytes):
 def get_spm(links):
     src_ports_map = {}
     for link in links:
-        if link["dst"]["device"] not in src_ports_map:
-            src_ports_map[link["dst"]["device"]] = []
-        if (link["src"]["device"] not in src_ports_map) or (
-                link["src"]["device"] in src_ports_map and link["src"]["port"] not in src_ports_map[
+        if link["src"]["device"] not in src_ports_map:
+            src_ports_map[link["src"]["device"]] = []
+        if (link["src"]["device"] in src_ports_map and link["src"]["port"] not in src_ports_map[
             link["src"]["device"]]):
-            src_ports_map[link["dst"]["device"]].extend(link["dst"]["port"])
+            src_ports_map[link["src"]["device"]].append(link["src"]["port"])
     print('src_ports_map:')
     for k in src_ports_map:
         print(f'{k}: {src_ports_map[k]}')
@@ -59,11 +55,11 @@ def get_spm(links):
 
 
 def read_weights_matrix(id):
-    os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt '
-              '/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt')
-    os.system('cp /home/andre/PycharmProjects/onos_short_path/onos/weights.txt '
-              f'/home/andre/PycharmProjects/onos_short_path/onos/taken_weights{id}.txt')
-    with open("/home/andre/PycharmProjects/onos_short_path/onos/taken_weights.txt", "r") as f:
+    os.system(f'cp {onos_path}/weights.txt '
+              f'{onos_path}/taken_weights.txt')
+    os.system(f'cp {onos_path}/weights.txt '
+              f'{onos_path}/taken_weights{id}.txt')
+    with open(f"{onos_path}/taken_weights.txt", "r") as f:
         file = f.readlines()
     weights_matrix = []
     for line in file:

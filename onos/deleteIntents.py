@@ -1,11 +1,8 @@
 import sys
-
 import requests as req
-
 import requests.exceptions
+from configs.configs import IP
 
-import main
-IP = "172.17.0.5"
 USER = ("onos", "rocks")
 
 
