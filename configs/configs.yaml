@@ -1,6 +1,6 @@
-core_path: /home/andrey/SDN_modeling_system/core
-onos_path: /home/andrey/SDN_modeling_system/onos
-itg_path: /home/andrey/D-ITG-2.8.1-r1023/bin
+core_path: /home/andre/PycharmProjects/onos_short_path/core
+onos_path: /home/andre/PycharmProjects/onos_short_path/onos
+itg_path: /home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin
 IP: 172.17.0.2
 used_onos_controllers:
-  - onos-test
+  - onos
