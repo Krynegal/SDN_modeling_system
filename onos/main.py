@@ -139,23 +139,13 @@ def go_dijkstra(graph: dijkstra.Graph, start: int) -> list:
     return path_list
 
 
-def get_routes_for_each_switch_target(graph: dijkstra.Graph, switch_targets: list, paths: list):
+def get_routes_for_each_switch_target(switch_targets: list, paths: list):
     routes = []
     for path in paths:
         points = Path()
         nodes = path[1]
         if int(nodes[-1].data[3:], 16) in switch_targets:
             num_nodes = [int(_.data[3:], 16) for _ in nodes]
-
-            for i in range(len(num_nodes)-1):
-                src = num_nodes[i]
-                dst = num_nodes[i+1]
-                old_weight = graph.get_weight(src, dst)
-                if old_weight != 0:
-                    new_weight = old_weight+0.01
-                    print(f'src: {src}; dst: {dst}; old_weight: {old_weight}; new_weight: {new_weight}')
-                    graph.set_new_weight(src, dst, new_weight)
-
             points.list = num_nodes
             routes.append(points)
             print(f'points.list {points.list}')
@@ -170,7 +160,7 @@ def get_intents_to_send(graph: dijkstra.Graph, hosts_info, links, src_dst_switch
         start_switch_node = int(src_switch)
         switch_targets = src_dst_switch_map[src_switch]
         paths = go_dijkstra(graph, start_switch_node)
-        routes = get_routes_for_each_switch_target(graph, switch_targets, paths)
+        routes = get_routes_for_each_switch_target(switch_targets, paths)
         print(f'routes: {routes}')
         for start_switch in switch_start_pairs:
             for pair in switch_start_pairs[start_switch]:
@@ -178,7 +168,6 @@ def get_intents_to_send(graph: dijkstra.Graph, hosts_info, links, src_dst_switch
                     if len(route.list) == 1 and route.list[0] == hosts_info[pair[0]]["switch"] == \
                             hosts_info[pair[1]]["switch"] or start_switch == route.list[0] and \
                             hosts_info[pair[1]]["switch"] == route.list[-1]:
-                        print(f'used route: {route.list} for {pair[0]} -> {pair[1]}')
                         pair_intents.extend(make_intent(route, hosts_info, links, pair[0], pair[1]))
                         break
     print("\n")
