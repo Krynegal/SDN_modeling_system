@@ -28,6 +28,7 @@ with open("all_results.json", "r") as f:
 
 total_pkts_recv = [int(all_results[i]["Total packets"]) for i in all_results]
 dropped_pkts = [int(all_results[i]["Packets dropped"]) for i in all_results]
+received_bytes = [int(all_results[i]["Bytes received"]) for i in all_results]
 
 packet_loss_for_each_receiver = []
 for i in range(len(total_pkts_recv)):
@@ -42,7 +43,8 @@ print(f"packet loss for each receiver: {packet_loss_for_each_receiver}")
 print(f"total packet loss: {round((sum(dropped_pkts) / (sum(total_pkts_recv) + sum(dropped_pkts))) * 100, 2)} %\n")
 pprint("packet loss", packet_loss_for_each_receiver)
 
-print(f"throughput: {round(sum(total_pkts_recv) / duration * pkt_size / 125_000, 2)} Mbts/s \n")
+#print(f"throughput: {round(sum(total_pkts_recv) / duration * pkt_size / 125_000, 2)} Mbts/s \n")
+print(f"throughput: {round(sum(received_bytes) / duration / 125_000, 2)} Mbts/s \n")
 
 t = []
 for i in range(len(total_pkts_recv)):
