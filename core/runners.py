@@ -15,15 +15,31 @@ def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_rec
     print('---start of processing---')
     print('processing...')
 
+    receivers_start = datetime.datetime.now()
+    print(f'\n [!!!] start receivers creation at {receivers_start.strftime("%H:%M:%S:%f")}')
     for i in range(len(receivers)):
         if receivers[i] not in all_receivers:
             all_receivers.append(receivers[i])
             hosts[int(receivers[i]) - 1].cmd(f'cd {itg_path} && ./ITGRecv -l recv{receivers[i]}.log &')
-        if i == len(receivers) - 1:
-            time.sleep(1)
+    receivers_end = datetime.datetime.now()
+    print(f'[!!!] all receivers have been created at {receivers_end.strftime("%H:%M:%S:%f")}')
+    receivers_duration = receivers_end - receivers_start
+    hours, remainder = divmod(receivers_duration.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    print(f'creation took {minutes}:{seconds}')
+    time.sleep(1)
 
+    senders_start = datetime.datetime.now()
+    print(f'\n [!!!] start senders creation at {senders_start.strftime("%H:%M:%S:%f")}')
     for i in senders:
         hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} -l send{i}.log &')
+        print(f'sender {i} started at {datetime.datetime.now().strftime("%H:%M:%S:%f")}')
+    senders_end = datetime.datetime.now()
+    print(f'[!!!] all senders have been created at {senders_end.strftime("%H:%M:%S:%f")}')
+    senders_duration = senders_end - senders_start
+    hours, remainder = divmod(senders_duration.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    print(f'creation took {minutes}:{seconds}')
     time.sleep(int(duration))
 
 

@@ -26,7 +26,7 @@ from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_s
     remove_duplicates, to_onos_device, to_hex
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
-from onos.api import post_intents, get_links
+from onos.api import post_intents, get_links, arp_on
 from configs.configs import core_path, itg_path, used_onos_controllers
 
 
@@ -75,6 +75,7 @@ class MyTopo(Topo):
             for line in f.readlines():
                 host, switch = map(int, line.strip().split(", "))
                 host_switch_conn[host] = switch
+        print(host_switch_conn)
 
         # матрица соединений свитчей
         matrix = [[0] * len(nodes) for _ in range(len(nodes))]
@@ -92,13 +93,13 @@ class MyTopo(Topo):
         # создаем все хосты и коннектим их с их свитчами
         for host_num in host_switch_conn:
             host = self.addHost(f'h{host_num}', ip=f'192.168.{host_num // 255}.{host_num % 255 + (host_num // 255)}')
-            self.addLink(host, switches[host_switch_conn[host_num] - 1], bw=1000)
+            self.addLink(host, switches[host_switch_conn[host_num] - 1])
 
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
-                    self.addLink(switches[row], switches[col], bw=1000)
+                    self.addLink(switches[row], switches[col])
 
 
 def delete_old_files():
@@ -223,7 +224,7 @@ def main():
             switches_num += 1
     print(f'switchesNum: {switches_num}\n')
     print(host_addr_map.values())
-
+    arp_on()
     while True:
         print('input "m" to run mininet console')
         print('input "c" to run custom')
@@ -288,13 +289,13 @@ def main():
                 senders = get_senders(traffic)
                 generate_custom(id, host_addr_map, traffic, traffic_conf)
 
-                if id == 1:
-                    time.sleep(20)
-                    stat_thread = Thread(name="stats thread", target=run_stats_processing,
-                                         args=(links, switches_num, max_flow_duration, switch_controller_file,))
-                    stat_thread.start()
-                    print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
-                    threads.append(stat_thread)
+                # if id == 1:
+                #     time.sleep(20)
+                #     stat_thread = Thread(name="stats thread", target=run_stats_processing,
+                #                          args=(links, switches_num, max_flow_duration, switch_controller_file,))
+                #     stat_thread.start()
+                #     print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
+                #     threads.append(stat_thread)
 
                 scripts_path = core_path + f'/actions/action{id}/'
                 name = str(id)
