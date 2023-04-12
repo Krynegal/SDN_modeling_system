@@ -12,8 +12,8 @@ from mininet.link import TCLink
 from mininet.node import RemoteController, OVSSwitch
 
 conf_path = os.getcwd()
-sys.path.append("/home/andre/PycharmProjects/onos_short_path/onos")
-sys.path.append("/home/andre/.local/lib/python3.10/site-packages")
+sys.path.append("/home/andrey/SDN_modeling_system/onos")
+sys.path.append("/home/andrey/.local/lib/python3.8/site-packages")
 sys.path.append("..")
 sys.path.append(conf_path)
 print(sys.path)
@@ -26,7 +26,7 @@ from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_s
     remove_duplicates, to_onos_device, to_hex
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
-from onos.api import post_intents, get_links
+from onos.api import post_intents, get_links, arp_on
 from configs.configs import core_path, itg_path, used_onos_controllers
 
 
@@ -92,13 +92,13 @@ class MyTopo(Topo):
         # создаем все хосты и коннектим их с их свитчами
         for host_num in host_switch_conn:
             host = self.addHost(f'h{host_num}', ip=f'192.168.{host_num // 255}.{host_num % 255 + (host_num // 255)}')
-            self.addLink(host, switches[host_switch_conn[host_num] - 1], bw=1000)
+            self.addLink(host, switches[host_switch_conn[host_num] - 1])
 
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
                 if graph.adj_mat[row][col] != 0:
-                    self.addLink(switches[row], switches[col], bw=1000)
+                    self.addLink(switches[row], switches[col])
 
 
 def delete_old_files():
@@ -190,12 +190,15 @@ def main():
     # gen_host_switch_pair()
 
     switch_ctrls = read_switch_controller_file()
-    onos_ips = get_onos_ips(used_onos_controllers)
+    #onos_ips = get_onos_ips(used_onos_controllers)
+    onos_ips = ["192.168.0.202"]
     print(f'onos_ips: {onos_ips}')
     ctrls = []
-    for i in range(len(onos_ips)):
-        c = RemoteController(f'c{i+1}', ip=f'{onos_ips[i]}', port=6653)
-        ctrls.append(c)
+    #for i in range(len(onos_ips)):
+    c1 = RemoteController('c1', ip='192.168.0.202', port=6653)
+    ctrls.append(c1)
+    c2 = RemoteController('c2', ip='192.168.0.202', port=6654)
+    ctrls.append(c2)
     cmap = get_cmap(switch_ctrls, ctrls)
     print(f'cmap: {cmap}')
 
@@ -223,7 +226,7 @@ def main():
             switches_num += 1
     print(f'switchesNum: {switches_num}\n')
     print(host_addr_map.values())
-
+    arp_on()
     while True:
         print('input "m" to run mininet console')
         print('input "c" to run custom')
@@ -288,13 +291,13 @@ def main():
                 senders = get_senders(traffic)
                 generate_custom(id, host_addr_map, traffic, traffic_conf)
 
-                if id == 1:
-                    time.sleep(20)
-                    stat_thread = Thread(name="stats thread", target=run_stats_processing,
-                                         args=(links, switches_num, max_flow_duration, switch_controller_file,))
-                    stat_thread.start()
-                    print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
-                    threads.append(stat_thread)
+                #if id == 1:
+                #    time.sleep(20)
+                #    stat_thread = Thread(name="stats thread", target=run_stats_processing,
+                #                         args=(links, switches_num, max_flow_duration, switch_controller_file,))
+                #    stat_thread.start()
+                #    print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
+                #    threads.append(stat_thread)
 
                 scripts_path = core_path + f'/actions/action{id}/'
                 name = str(id)

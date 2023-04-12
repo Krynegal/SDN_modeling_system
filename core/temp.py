@@ -1,14 +1,37 @@
+#!/usr/bin/python
 import os
 import random
 import time
-from copy import copy, deepcopy
 import subprocess
 import numpy as np
 
 if __name__ == '__main__':
-    text = "recv1.txt"
-    res = text[0:-4] + "_log" + text[-4:len(text)]
-    print(res)
+    
+    #create custom traffic четное нечетному и наоборот
+    with open("custom_traffics/custom_traffic_80.txt", "w") as f:
+        f.write("UDP; ")
+        for i in range(80):
+            for j in range(80):
+                if i % 2 == 0 and j % 2 != 0 or i % 2 != 0 and j % 2 == 0:
+                    f.write(f'{i+1},{j+1}; ')
+
+    # create fat_tree_hosts
+    with open("topologies/fat_tree_hosts_80.txt", "w") as f:
+        j = 1
+        c = 0
+        for i in range(80):
+            if c == 2:
+                j += 1
+                c = 0
+            f.write(f'{i+1}, {j}\n')
+            c += 1
+
+    # create switch_controller
+    # with open("switch_controller_100_one.txt", "w") as f:
+    #     for i in range(80):
+    #         f.write(f"{i+1}, 1\n")
+
+
 
     # weight_matrix = np.where(matrix == -1, 0, 16)
 

@@ -5,6 +5,17 @@ from configs.configs import IP
 
 USER = ("onos", "rocks")
 
+def arp_on():
+    try:
+        res = req.post(f"http://{IP}:8181/onos/v1/applications/org.onosproject.proxyarp/active", auth=USER)
+        if res.status_code == 200:
+            print("====================================================")
+            print("=                   ARP IS ON                      =")
+            print("====================================================")
+    except req.exceptions.ConnectionError:
+        print("Oops. Seems like dns lookup failed..")
+        sys.exit()
+
 
 def get_links():
     try:

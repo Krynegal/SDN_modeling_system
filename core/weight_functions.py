@@ -3,7 +3,7 @@ def w_func1(x):
 
 
 def w_func2(x):
-    return (x / 1_000)**2 + 1
+    return (x / 1_000) + 1
 
 
 weight_funcs = {
