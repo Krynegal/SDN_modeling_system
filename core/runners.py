@@ -60,10 +60,6 @@ def run_stats_processing(links, num_devices: int, duration, switch_controller_fi
         thread.join()
 
 
-def weight_func(df, edge):
-    return df[edge][0] * (df[edge][1] / 1000) if edge in df else 0
-
-
 def temp(matrix, src_ports_map, t, switch_controller_map):
     matrix = get_stats(matrix, src_ports_map)
     n = len(matrix)
@@ -84,7 +80,7 @@ def temp(matrix, src_ports_map, t, switch_controller_map):
                         df[frozenset(edge)] = [1, max_flow]
                     else:
                         df[frozenset(edge)] = [df[frozenset(edge)][0] + 1, df[frozenset(edge)][1] + max_flow]
-                print(f'max flow from {i} to {j} = {max_flow}; min cut: {min_cut}')
+                #print(f'max flow from {i} to {j} = {max_flow}; min cut: {min_cut}')
             else:
                 print(f'there is no path from {i} to {j}')
     print(f'\ndf: {df}\nlen(df):{len(df)}\n')
@@ -98,7 +94,7 @@ def temp(matrix, src_ports_map, t, switch_controller_map):
             else:
                 w_func = weight_funcs[2]
             # тут будем передавать в w_func параметры принадлежности ребра к мин разрезам и макc потокам
-            weight_matrix[i][j] = round(weight_func(df, frozenset({i, j})), 2)
+            weight_matrix[i][j] = round(w_func(df, frozenset({i, j})), 2)
             weight_matrix[j][i] = weight_matrix[i][j]
 
     with open(f"{onos_path}/weights.txt", "w") as f:
