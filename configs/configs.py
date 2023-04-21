@@ -6,5 +6,6 @@ with open('../configs/configs.yaml', 'r') as f:
 core_path = cfg["core_path"]
 onos_path = cfg["onos_path"]
 itg_path = cfg["itg_path"]
-used_onos_controllers = cfg["used_onos_controllers"]
+VM = cfg["VM"]
 IP = cfg["IP"]
+used_onos_controllers = cfg["used_onos_controllers"]

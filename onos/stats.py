@@ -36,7 +36,8 @@ def update_matrix(matrix, dev1, dev2, bytes):
     dev1 = int(dev1[3:], 16) - 1
     dev2 = int(dev2[3:], 16) - 1
     # Переводим байты в мегабайты
-    matrix[dev1][dev2] = round(bytes / 125_000, 2)
+    #matrix[dev1][dev2] = round(bytes / 125_000, 2)
+    matrix[dev1][dev2] = round(10000 - (bytes / 125_000), 2)
     matrix[dev2][dev1] = matrix[dev1][dev2]
 
 

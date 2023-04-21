@@ -1,6 +1,12 @@
 core_path: /home/andrey/SDN_modeling_system/core
 onos_path: /home/andrey/SDN_modeling_system/onos
 itg_path: /home/andrey/D-ITG-2.8.1-r1023/bin
+
+# IP for requests to controller's API
 IP: 192.168.0.202
+
+# true if remote controllers are located on VMs false instead
+VM: true
+
 used_onos_controllers:
   - onos-test

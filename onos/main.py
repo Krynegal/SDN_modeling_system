@@ -150,7 +150,7 @@ def get_routes_for_each_switch_target(graph: dijkstra.Graph, switch_targets: lis
             for i in range(len(num_nodes)-1):
                 src = num_nodes[i]
                 dst = num_nodes[i+1]
-                old_weight = graph.get_weight(src, dst)
+                old_weight = graph.get_weight(src-1, dst-1)
                 if old_weight != 0:
                     new_weight = old_weight+0.01
                     print(f'src: {src}; dst: {dst}; old_weight: {old_weight}; new_weight: {new_weight}')
