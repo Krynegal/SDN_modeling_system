@@ -307,7 +307,7 @@ def main():
                 if id == 1:
                     time.sleep(20)
                     stat_thread = Thread(name="stats thread", target=run_stats_processing,
-                                         args=(links, switches_num, max_flow_duration, switch_controller_file,))
+                                         args=(links, switches_num, max_flow_duration, switch_controller_file, bandwidth))
                     stat_thread.start()
                     print(f'thread: {stat_thread.name} is started at {datetime.now().strftime("%H:%M:%S")}')
                     threads.append(stat_thread)

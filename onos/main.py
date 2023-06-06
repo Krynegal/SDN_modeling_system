@@ -169,6 +169,7 @@ def get_intents_to_send(graph: dijkstra.Graph, hosts_info, links, src_dst_switch
     for src_switch in src_dst_switch_map:
         start_switch_node = int(src_switch)
         switch_targets = src_dst_switch_map[src_switch]
+        switch_targets = list(set(switch_targets))
         paths = go_dijkstra(graph, start_switch_node)
         routes = get_routes_for_each_switch_target(graph, switch_targets, paths)
         print(f'routes: {routes}')
