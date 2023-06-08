@@ -111,6 +111,7 @@ def temp(matrix, src_ports_map, t, switch_controller_map, bandwidth):
                 w_func = weight_funcs[switch_controller_map[i + 1]]
             else:
                 w_func = weight_funcs[2]
+                
             # dijkstra
             weight_matrix[i][j] = w_func(matrix[i][j])
             

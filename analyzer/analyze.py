@@ -11,6 +11,7 @@ if len(args) != 2:
 duration = int(args[1])
 
 
+
 def pprint(metric, data):
     print(f"{metric}: ")
     print(f"\tmean: {statistics.mean(data)}")
@@ -60,4 +61,3 @@ pprint("delay", delays)
 jitters = [float(all_results[i]["Average jitter"]) * 1000 for i in all_results]  # jitter in ms
 print(jitters)
 pprint("jitter", jitters)
-

@@ -26,7 +26,9 @@ from onos.main import get_intents_to_send, get_switch_start_pairs, get_src_dst_s
     remove_duplicates, to_onos_device, to_hex
 from onos.dijkstra import get_dijkstra_graph
 from onos.stats import read_weights_matrix
+
 from onos.api import post_intents, get_links, arp_on
+
 from configs.configs import core_path, itg_path, VM, IP, used_onos_controllers
 
 
@@ -105,7 +107,8 @@ class MyTopo(Topo):
             if bandwidth == 1000:
                 self.addLink(host, switches[host_switch_conn[host_num] - 1], bw=1000)
             else:
-                self.addLink(host, switches[host_switch_conn[host_num] - 1])
+                self.addLink(host, switches[host_switch_conn[host_num] - 1], bw=1000)
+                
         # add links between switches
         for row in range(len(graph.adj_mat)):
             for col in range(row, len(graph.adj_mat[row])):
@@ -199,6 +202,7 @@ def main():
     switch_ctrls = read_switch_controller_file()
     
     onos_ips = get_onos_ips(used_onos_controllers)
+    
     print(f'VM {VM}')
     print(f'IP: {IP}')
     print(f'c_num {controllers_number}')

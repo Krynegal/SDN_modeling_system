@@ -146,7 +146,6 @@ def get_routes_for_each_switch_target(graph: dijkstra.Graph, switch_targets: lis
         nodes = path[1]
         if int(nodes[-1].data[3:], 16) in switch_targets:
             num_nodes = [int(_.data[3:], 16) for _ in nodes]
-            
             for i in range(len(num_nodes)-1):
                 src = num_nodes[i]
                 dst = num_nodes[i+1]
@@ -155,7 +154,6 @@ def get_routes_for_each_switch_target(graph: dijkstra.Graph, switch_targets: lis
                     new_weight = old_weight+0.01
                     print(f'src: {src}; dst: {dst}; old_weight: {old_weight}; new_weight: {new_weight}')
                     graph.set_new_weight(src, dst, new_weight)
-            
             points.list = num_nodes
             routes.append(points)
             print(f'points.list {points.list}')

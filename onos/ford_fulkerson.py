@@ -108,4 +108,3 @@ class Graph:
                     # print(str(i) + " - " + str(j))
                     min_cut.append([i, j])
         return max_flow, min_cut
-
