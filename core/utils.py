@@ -1,7 +1,4 @@
 #!/usr/bin/python
-
-core_path = '/home/andre/PycharmProjects/onos_short_path/core'
-scripts_path = core_path + 'scripts/'
 USER = ("onos", "rocks")
 
 

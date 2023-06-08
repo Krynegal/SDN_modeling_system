@@ -6,19 +6,9 @@ import subprocess
 import numpy as np
 
 if __name__ == '__main__':
-    # ip = subprocess.check_output("docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' atomix-1", universal_newlines=True)
-    # ip = subprocess.check_output("docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' atomix-1", shell=True)
-    ip = os.popen(f"docker inspect -f '{{{{range.NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' atomix-1").read()
-    print(ip)
-    #print(ip.strip())
-
-    # switch_controller_map = {}
-    # with open("/home/andre/PycharmProjects/onos_short_path/core/switch_controller.txt", "r") as f:
-    #     for line in f.readlines():
-    #         splited_line = line.strip().split(", ")
-    #         switch, controller = map(int, splited_line)
-    #         switch_controller_map[switch] = controller
-
+    text = "recv1.txt"
+    res = text[0:-4] + "_log" + text[-4:len(text)]
+    print(res)
 
     # weight_matrix = np.where(matrix == -1, 0, 16)
 

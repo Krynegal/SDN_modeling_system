@@ -12,6 +12,7 @@ def print_matrix(matrix):
         print(i)
     print()
 
+
 def matrix_correctness(matrix):
     row_num = len(matrix)
     for row in matrix:

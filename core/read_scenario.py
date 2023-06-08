@@ -1,8 +1,9 @@
 import yaml
+from configs.configs import core_path
 
 
-def get_yaml_content():
-    with open('/home/andre/PycharmProjects/onos_short_path/core/scenario.yaml') as f:
+def read_scenario():
+    with open(f'{core_path}/scenario.yaml') as f:
         scenario = yaml.load(f, Loader=yaml.Loader)
     return scenario
 
@@ -15,6 +16,6 @@ def find_max_flow_duration(scenario):
 
 
 if __name__ == '__main__':
-    scenario = get_yaml_content()
+    scenario = read_scenario()
     print(find_max_flow_duration(scenario))
     print(scenario)
