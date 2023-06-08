@@ -1,30 +1,56 @@
 topo_file_path: fat_tree.txt
 switch_hosts_conn_file_path: fat_tree_hosts.txt
-switch_controller_file_path: switch_controller_one.txt
+
+switch_controller_file_path: switch_controller_16_2.txt
 bandwidth: 10000
-controllers_number: 1
+controllers_number: 2
+
 flows:
   -
     id: 1
-    name: custom_traffic.txt
+    name: custom_traffic_16_ata.txt
     start_time: 0
     traffic_conf:
       duration: 120
       rate: 1000
-      pktSize: 1000
+      pktSize: 0
   -
     id: 2
-    name: c2.txt
-    start_time: 60
+    name: cutom_traffic_8_1_ata.txt
+    start_time: 20
+    traffic_conf:
+      duration: 100
+      rate: 1000
+      pktSize: 0
+  -
+    id: 3
+    name: cutom_traffic_8_2_ata.txt
+    start_time: 20
+    traffic_conf:
+      duration: 80
+      rate: 1000
+      pktSize: 0
+  -
+    id: 4
+    name: cutom_traffic_8_1_ata.txt
+    start_time: 20
     traffic_conf:
       duration: 60
       rate: 1000
-      pktSize: 1000
-#  -
-#    id: 3
-#    name: c3.txt
-#    start_time: 15
-#    traffic_conf:
-#      duration: 15
-#      rate: 2000
-#      pktSize: 2000
+      pktSize: 0
+  -
+    id: 5
+    name: cutom_traffic_8_2_ata.txt
+    start_time: 20
+    traffic_conf:
+      duration: 40
+      rate: 1000
+      pktSize: 0
+  -
+    id: 6
+    name: cutom_traffic_8_1_ata.txt
+    start_time: 20
+    traffic_conf:
+      duration: 20
+      rate: 1000
+      pktSize: 0

@@ -5,11 +5,11 @@ import statistics
 from numpy import percentile
 
 args = sys.argv
-if len(args) != 3:
-    print("arguments are required: pkt_size=... duration=...")
+if len(args) != 2:
+    print("arguments are required: duration=...")
     sys.exit()
-pkt_size = int(args[1])
-duration = int(args[2])
+duration = int(args[1])
+
 
 
 def pprint(metric, data):

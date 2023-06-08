@@ -1,17 +1,12 @@
-core_path: /home/andre/PycharmProjects/onos_short_path/core
-onos_path: /home/andre/PycharmProjects/onos_short_path/onos
-itg_path: /home/andre/Загрузки/D-ITG-2.8.1-r1023-src/D-ITG-2.8.1-r1023/bin
+core_path: /home/andrey/SDN_modeling_system/core
+onos_path: /home/andrey/SDN_modeling_system/onos
+itg_path: /home/andrey/D-ITG-2.8.1-r1023/bin
 
 # IP for requests to controller's API
-IP: 172.17.0.2
+IP: 192.168.0.202
 
 # true if remote controllers are located on VMs false instead
-VM: false
+VM: true
 
-# number of using controllers
-# if {controllers_number} == 1 we detect controller's ips
-# by docker container names from {used_onos_controllers}
-# else we use {IP}*{used_onos_controllers} list like ['{IP}', ..., {IP}]
-controllers_number: 1
 used_onos_controllers:
-  - onos
+  - onos-test

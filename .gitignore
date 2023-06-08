@@ -1,5 +1,5 @@
 .idea
-
+__pycache__
 *.txt
 !core/custom_traffics/*.txt
 !core/topologies/*.txt

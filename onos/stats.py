@@ -6,7 +6,7 @@ from configs.configs import IP, onos_path
 USER = ("onos", "rocks")
 
 
-def get_stats(matrix, spm: dict):
+def get_stats(matrix, spm: dict, bandwidth):
     try:
         for device in spm:
             for port in spm[device]:
@@ -26,18 +26,20 @@ def get_stats(matrix, spm: dict):
                     all_instances = parse.urlparse(second_device_link)
                     dict_from_query = parse.parse_qs(all_instances.query)
                     second_device = dict_from_query['device'][0]
-                    update_matrix(matrix, device, second_device, bytes)
+                    update_matrix(matrix, device, second_device, bytes, bandwidth)
         return matrix
     except req.exceptions.ConnectionError:
         print("Oops. Seems like dns lookup failed..")
 
 
-def update_matrix(matrix, dev1, dev2, bytes):
+def update_matrix(matrix, dev1, dev2, bytes, bandwidth):
     dev1 = int(dev1[3:], 16) - 1
     dev2 = int(dev2[3:], 16) - 1
     # Переводим байты в мегабайты
     #matrix[dev1][dev2] = round(bytes / 125_000, 2)
-    matrix[dev1][dev2] = round(10000 - (bytes / 125_000), 2)
+    matrix[dev1][dev2] = round(bandwidth - (bytes / 125_000), 2)
+    if matrix[dev1][dev2] < 0:
+        matrix[dev1][dev2] = 1
     matrix[dev2][dev1] = matrix[dev1][dev2]
 
 

@@ -16,15 +16,31 @@ def run_custom(scripts_path: str, hosts: [], senders: [], receivers: [], all_rec
     print('---start of processing---')
     print('processing...')
 
+    receivers_start = datetime.datetime.now()
+    print(f'\n [!!!] start receivers creation at {receivers_start.strftime("%H:%M:%S:%f")}')
     for i in range(len(receivers)):
         if receivers[i] not in all_receivers:
             all_receivers.append(receivers[i])
             hosts[int(receivers[i]) - 1].cmd(f'cd {itg_path} && ./ITGRecv -l recv{receivers[i]}.log &')
-        if i == len(receivers) - 1:
-            time.sleep(1)
+    receivers_end = datetime.datetime.now()
+    print(f'[!!!] all receivers have been created at {receivers_end.strftime("%H:%M:%S:%f")}')
+    receivers_duration = receivers_end - receivers_start
+    hours, remainder = divmod(receivers_duration.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    print(f'receivers creation took {minutes}:{seconds}\n')
+    time.sleep(1)
 
+    senders_start = datetime.datetime.now()
+    print(f'\n [!!!] start senders creation at {senders_start.strftime("%H:%M:%S:%f")}')
     for i in senders:
-        hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} -l send{i}.log &')
+        hosts[int(i) - 1].cmd(f'cd {itg_path} && ./ITGSend {scripts_path}script{i} &')
+        print(f'sender {i} started at {datetime.datetime.now().strftime("%H:%M:%S:%f")}')
+    senders_end = datetime.datetime.now()
+    print(f'[!!!] all senders have been created at {senders_end.strftime("%H:%M:%S:%f")}')
+    senders_duration = senders_end - senders_start
+    hours, remainder = divmod(senders_duration.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    print(f'senders creation took {minutes}:{seconds}\n')
     time.sleep(int(duration))
 
 
@@ -35,7 +51,7 @@ def write_matrix(f, matrix):
     f.write("\n")
 
 
-def run_stats_processing(links, num_devices: int, duration, switch_controller_file):
+def run_stats_processing(links, num_devices: int, duration, switch_controller_file, bandwidth):
     #matrix = np.full((num_devices, num_devices), -1)
     matrix = np.full((num_devices, num_devices), 0)
     src_ports_map = get_spm(links)
@@ -52,24 +68,24 @@ def run_stats_processing(links, num_devices: int, duration, switch_controller_fi
     for t in range(2, duration + 1, 2):
         time.sleep(2)
         thread = Thread(name=f"stats thread {t}", target=temp,
-                        args=(matrix, src_ports_map, t, switch_controller_map,))
+                        args=(matrix, src_ports_map, t, switch_controller_map, bandwidth,))
         thread.start()
         threads.append(thread)
         print(f'start stats thread {t} at {datetime.datetime.now().strftime("%H:%M:%S")}')
     for thread in threads:
         thread.join()
 
-
-def temp(matrix, src_ports_map, t, switch_controller_map):
-    matrix = get_stats(matrix, src_ports_map)
+def temp(matrix, src_ports_map, t, switch_controller_map, bandwidth):
+    matrix = get_stats(matrix, src_ports_map, bandwidth)
     n = len(matrix)
     weight_matrix = np.full((n, n), 0.0)
     print(f'\nmatrix:\n{matrix}\n')
 
     # вот тут врубаем Форда-Фалкерсона на матрице остаточной пропускной способности
+    mc_len = 0
     df = {}  # {i, j} : [frequency, max_flow_sum]
-    for i in range(len(matrix)):
-        for j in range(len(matrix)):
+    for i in range(8):
+        for j in range(8):
             if i == j:
                 continue
             g = ff_graph(matrix)
@@ -80,10 +96,12 @@ def temp(matrix, src_ports_map, t, switch_controller_map):
                         df[frozenset(edge)] = [1, max_flow]
                     else:
                         df[frozenset(edge)] = [df[frozenset(edge)][0] + 1, df[frozenset(edge)][1] + max_flow]
+                mc_len += 1
                 #print(f'max flow from {i} to {j} = {max_flow}; min cut: {min_cut}')
             else:
                 print(f'there is no path from {i} to {j}')
     print(f'\ndf: {df}\nlen(df):{len(df)}\n')
+    print(f'total number of min cuts: {mc_len}')
 
     for i in range(n):
         for j in range(i):
@@ -93,8 +111,27 @@ def temp(matrix, src_ports_map, t, switch_controller_map):
                 w_func = weight_funcs[switch_controller_map[i + 1]]
             else:
                 w_func = weight_funcs[2]
-            # тут будем передавать в w_func параметры принадлежности ребра к мин разрезам и макc потокам
-            weight_matrix[i][j] = round(w_func(df, frozenset({i, j})), 2)
+                
+            # dijkstra
+            weight_matrix[i][j] = w_func(matrix[i][j])
+            
+            # residual bandwidth
+            # weight_matrix[i][j] = w_func(bandwidth, matrix[i][j])
+            
+            # risidual_bw_use_percent
+            #weight_matrix[i][j] = round(w_func(df, bandwidth, frozenset({i, j}), matrix[i][j]), 2)
+            
+            # squared
+            # weight_matrix[i][j] = round( w_func(df, bandwidth, frozenset({i, j}), matrix[i][j], mc_len), 2)
+           
+            # squared 3 params 
+            # weight_matrix[i][j] = round( w_func(df, bandwidth, frozenset({i, j}), matrix[i][j], mc_len), 2)
+ 
+            # ff 
+            #weight_matrix[i][j] = w_func(df, bandwidth, frozenset({i, j}))
+
+            # ford fulkerson
+            #weight_matrix[i][j] = round(w_func(df, bandwidth, frozenset({i, j})), 2)
             weight_matrix[j][i] = weight_matrix[i][j]
 
     with open(f"{onos_path}/weights.txt", "w") as f:
